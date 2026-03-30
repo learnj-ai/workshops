@@ -6,15 +6,15 @@ site:
 content:
   sources:
     - url: .
-      start_path: content
+      start_path: llm-springboot/site/content
 
 ui:
   bundle:
     url: https://github.com/rhpds/rhdp_showroom_theme/releases/download/v0.0.1/ui-bundle.zip
     snapshot: true
   supplemental_files:
-    - path: ./content/supplemental-ui
-    - path: ./content/lib
+    - path: ./llm-springboot/site/content/supplemental-ui
+    - path: ./llm-springboot/site/content/lib
     - path: .nojekyll
     - path: ui.yml
       contents: "static_files: [ .nojekyll ]"
@@ -24,8 +24,8 @@ runtime:
 
 antora:
   extensions:
-    - require: ./content/lib/dev-mode.js
+    - require: ./llm-springboot/site/content/lib/dev-mode.js
       enabled: true
 
 output:
-  dir: ./www
+  dir: ./llm-springboot/site/www
