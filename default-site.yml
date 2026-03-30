@@ -28,4 +28,4 @@ antora:
       enabled: true
 
 output:
-  dir: ./llm-springboot/site/www
+  dir: ./output
