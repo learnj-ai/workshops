@@ -1,0 +1,119 @@
+= Module 5: Security & Guardrails
+:imagesdir: ../assets/images/
+
+== 1. Goals of this Lab
+
+* Defend against prompt injection attacks
+* Implement PII masking and data protection
+* Add output validation and content filtering
+* Create security monitoring
+
+*Estimated time:* 45 minutes
+
+== 2. Introduction
+
+AI introduces a new attack surface.
+We focus on hardening the system against both accidental and malicious misuse.
+
+=== What You Will Build
+
+A security-hardened RAG pipeline with input validation, PII masking, output filtering, and audit logging.
+
+*API Endpoint:* `POST /api/v1/secure/query`
+
+== 3. Background
+
+=== 3.1. Prompt Injection
+
+Attackers attempt to override system instructions by injecting directives in user input.
+Defenses include pattern matching, input sanitization, and separating system from user prompts.
+
+=== 3.2. PII Protection
+
+Personally Identifiable Information (emails, phone numbers, SSNs, credit card numbers) must be detected and masked before reaching the LLM.
+
+=== 3.3. Output Validation
+
+An LLM "judge" layer validates responses for toxicity, confidentiality leaks, and hallucinations before they reach the user.
+
+== 4. Hands-On Lab
+
+=== Lab 5.1: Prompt Injection Defense
+
+==== Objective
+
+Test various prompt injection techniques and defenses.
+
+==== Steps
+
+. Create `PromptInjectionGuard` with regex-based pattern detection.
+. Add input sanitization (HTML/XML removal, whitespace normalization).
+. Test with known injection patterns and verify they are blocked.
+
+=== Lab 5.2: PII Masking
+
+==== Objective
+
+Implement PII detection in the RAG retrieval pipeline.
+
+==== Steps
+
+. Create `PIIMaskingService` with regex patterns for email, phone, SSN, and credit card numbers.
+. Wire it into both the input and output paths.
+. Verify that PII is masked in responses.
+
+=== Lab 5.3: Output Validation with LLM Judge
+
+==== Objective
+
+Implement output filtering for toxic or unsafe content.
+
+==== Steps
+
+. Create `OutputValidator` using a secondary LLM as a safety judge.
+. Add hallucination detection by comparing outputs against source documents.
+. Test with edge cases that should be blocked.
+
+=== Lab 5.4: Access Control for RAG
+
+==== Objective
+
+Implement role-based access control for document retrieval.
+
+==== Steps
+
+. Create `DocumentAccessControl` that filters results by user role and department.
+. Enrich document metadata with ACL tags during ingestion.
+. Verify that users only see documents they are authorized to access.
+
+=== Lab 5.5: Security Monitoring
+
+==== Objective
+
+Implement security event monitoring.
+
+==== Steps
+
+. Create `SecurityAuditService` with Redis-backed event logging.
+. Log injection attempts, blocked outputs, and PII detections.
+. Verify events appear in the audit log.
+
+== 5. Challenge Exercise (Optional)
+
+Integrate with NeMo Guardrails or Llama Guard for production-grade content filtering.
+
+== 6. Knowledge Check
+
+. Name three common prompt injection techniques.
+. Why should PII be masked on both input and output?
+. What is the role of an "LLM Judge" in output validation?
+
+== 7. Recap
+
+In this module you:
+
+* Built prompt injection defenses
+* Implemented PII detection and masking
+* Added LLM-based output validation
+* Created role-based access control for RAG
+* Set up security audit logging

@@ -1,0 +1,117 @@
+= Module 4: From Chatbots to Agents
+:imagesdir: ../assets/images/
+
+== 1. Goals of this Lab
+
+* Implement the ReAct (Reason + Act) pattern
+* Build stateful conversation memory
+* Create multi-agent orchestration
+* Handle task decomposition
+
+*Estimated time:* 45 minutes
+
+== 2. Introduction
+
+An Agent is a system that can reason, use tools, and self-correct.
+We transition from linear pipelines to iterative loops.
+
+=== What You Will Build
+
+An autonomous agent that uses the ReAct pattern with persistent memory, capable of solving multi-step problems.
+
+*API Endpoint:* `POST /api/v1/agent/execute`
+
+== 3. Background
+
+=== 3.1. ReAct Pattern
+
+The ReAct (Reason + Act) pattern interleaves:
+
+. *THOUGHT* -- Analyze what needs to be done
+. *ACTION* -- Choose and invoke a tool
+. *OBSERVATION* -- Review the tool's result
+. Repeat until a final answer emerges
+
+=== 3.2. Stateful Memory
+
+Agents require memory to track progress across turns.
+We use Redis-backed `MessageWindowChatMemory` for session persistence.
+
+=== 3.3. Multi-Agent Orchestration
+
+Complex tasks benefit from specialized agents (support, documentation, product) coordinated by a routing agent.
+
+== 4. Hands-On Lab
+
+=== Lab 4.1: ReAct Agent
+
+==== Objective
+
+Build a ReAct agent that solves multi-step problems.
+
+==== Steps
+
+. Create `ReActAgent` with the thought/action/observation loop.
+. Configure max iterations and final answer extraction.
+. Test with a query that requires multiple tool invocations.
+
+=== Lab 4.2: Conversation Memory
+
+==== Objective
+
+Implement session-based conversation tracking.
+
+==== Steps
+
+. Start Redis:
++
+[source,bash]
+----
+docker compose up -d redis
+----
+
+. Create `ConversationMemoryService` with Redis-backed persistence.
+. Verify that conversation context is preserved across requests.
+
+=== Lab 4.3: Multi-Agent Orchestration
+
+==== Objective
+
+Build a multi-agent system with routing logic.
+
+==== Steps
+
+. Create specialized agents for customer support, documentation, and product queries.
+. Build a `MultiAgentOrchestrator` with LLM-based routing.
+. Test with queries that span multiple domains.
+
+=== Lab 4.4: Task Decomposition
+
+==== Objective
+
+Implement task decomposition for complex queries.
+
+==== Steps
+
+. Create a `TaskDecomposer` that breaks complex tasks into subtasks.
+. Execute subtasks sequentially, respecting dependencies.
+. Synthesize results into a coherent response.
+
+== 5. Challenge Exercise (Optional)
+
+Add a *collaborative mode* where multiple agents contribute perspectives and a coordinator synthesizes them.
+
+== 6. Knowledge Check
+
+. What are the three phases of the ReAct loop?
+. Why is persistent memory important for agents?
+. How does multi-agent routing work?
+
+== 7. Recap
+
+In this module you:
+
+* Built a ReAct agent with iterative reasoning
+* Implemented Redis-backed conversation memory
+* Created multi-agent orchestration with routing
+* Added task decomposition for complex queries

@@ -143,5 +143,6 @@ Langchain4J
 Java 25
 Docker
 OpenShift
-Module instructions to be written in adoc, using antora. using template like this: https://github.com/rhpds/mta8-workshop
+Module instructions written in AsciiDoc using Antora with the RHDP Showroom theme.
+Template: https://github.com/rhpds/mta8-workshop
 

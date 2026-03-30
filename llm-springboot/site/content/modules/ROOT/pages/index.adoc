@@ -1,0 +1,55 @@
+= {lab_name}
+:imagesdir: ../assets/images/
+
+Moving beyond simple chatbots requires a deep understanding of how to architect secure, scalable, and autonomous AI systems.
+This hands-on workshop transforms developers into AI architects.
+We will start by deconstructing the mechanics of Vectors and Embeddings, move into building RAG pipelines, and then evolve our systems into autonomous Agents using the Model Context Protocol (MCP).
+
+Crucially, we will cover the "Day 2" operations of AI: implementing Security Guardrails to prevent prompt injection and data leakage, and adhering to Enterprise Best Practices for production deployment.
+
+== Workshop Modules
+
+[cols="1,3",options="header"]
+|===
+| Module | Topic
+
+| xref:module-01-vectors-embeddings.adoc[Module 1]
+| The Physics of AI -- Vectors & Embeddings
+
+| xref:module-02-advanced-rag.adoc[Module 2]
+| Advanced RAG (Retrieval-Augmented Generation)
+
+| xref:module-03-tools-mcp.adoc[Module 3]
+| Tools & The Model Context Protocol (MCP)
+
+| xref:module-04-chatbots-to-agents.adoc[Module 4]
+| From Chatbots to Agents
+
+| xref:module-05-security-guardrails.adoc[Module 5]
+| Security & Guardrails
+
+| xref:module-06-enterprise-production.adoc[Module 6]
+| Enterprise Best Practices & Production
+|===
+
+== Technology Stack
+
+* *Spring Boot* 3.4
+* *Langchain4J* 1.11
+* *Java* 25
+* *Docker / Docker Compose* for local services
+* *OpenShift* for production deployment
+
+== Unified Demo Project: Enterprise Knowledge Assistant
+
+*Use Case:* Building an intelligent assistant for a fictional company "TechCorp" that helps employees query internal documentation, product manuals, and customer support knowledge bases.
+The system evolves from basic vector search to a secure, production-ready autonomous agent.
+
+*Evolution Across Modules:*
+
+. *Module 1* -- Build embeddings and vector search
+. *Module 2* -- Add RAG capabilities with hybrid search
+. *Module 3* -- Connect to external tools (databases, APIs)
+. *Module 4* -- Transform into an autonomous agent
+. *Module 5* -- Add security guardrails
+. *Module 6* -- Deploy to production on OpenShift

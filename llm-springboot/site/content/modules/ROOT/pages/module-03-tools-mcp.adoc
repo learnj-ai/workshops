@@ -1,0 +1,99 @@
+= Module 3: Tools & The Model Context Protocol (MCP)
+:imagesdir: ../assets/images/
+
+== 1. Goals of this Lab
+
+* Understand MCP architecture (Host, Client, Server)
+* Build custom tools following MCP standards
+* Integrate with databases and external APIs
+* Implement tool discovery and selection
+
+*Estimated time:* 45 minutes
+
+== 2. Introduction
+
+The breakthrough in AI utility comes from connecting models to your data.
+We explore MCP as the standard for local and remote tool integration.
+
+=== What You Will Build
+
+A tool-augmented assistant that can query customer databases and call external APIs.
+
+*API Endpoint:* `POST /api/v1/assistant/chat`
+
+== 3. Background
+
+=== 3.1. The MCP Ecosystem
+
+MCP defines a standard protocol for how AI models interact with external tools and data sources.
+Key concepts:
+
+* *Host* -- The application running the AI model
+* *Client* -- The component that discovers and invokes tools
+* *Server* -- The component that exposes tools and resources
+
+=== 3.2. Langchain4J Tool Annotations
+
+Langchain4J provides `@Tool` and `@P` annotations for declaring tools that the LLM can discover and invoke.
+
+== 4. Hands-On Lab
+
+=== Lab 3.1: Database Tool
+
+==== Objective
+
+Create a custom tool that queries the customer database.
+
+==== Steps
+
+. Start PostgreSQL:
++
+[source,bash]
+----
+docker compose up -d postgres
+----
+
+. Create the `CustomerDataTool` class using `@Tool` annotations.
+. Wire the tool into the chat model configuration.
+. Test with natural language queries about customers.
+
+=== Lab 3.2: External API Tool
+
+==== Objective
+
+Build a tool that fetches real-time data from a public API.
+
+==== Steps
+
+. Create a `WeatherTool` that calls an external weather API.
+. Register it alongside the database tool.
+. Test with queries that require the model to select the correct tool.
+
+=== Lab 3.3: Tool Orchestration
+
+==== Objective
+
+Test tool selection with ambiguous queries.
+
+==== Steps
+
+. Create a `ToolOrchestrator` service that handles multi-turn tool invocations.
+. Test with queries that chain multiple tools together.
+
+== 5. Challenge Exercise (Optional)
+
+Build a tool that queries a product inventory system and returns structured JSON data.
+
+== 6. Knowledge Check
+
+. What are the three roles in the MCP architecture?
+. How does Langchain4J's `@Tool` annotation work?
+. What happens when the LLM selects the wrong tool?
+
+== 7. Recap
+
+In this module you:
+
+* Built MCP-compliant tools for database and API access
+* Configured tool discovery and selection
+* Implemented multi-tool orchestration

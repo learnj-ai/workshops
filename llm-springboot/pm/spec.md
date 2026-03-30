@@ -98,7 +98,8 @@ This specification provides detailed technical guidance for creating lab instruc
 - **Prometheus/Grafana** for observability (Module 6)
 
 ### Documentation
-- **GitBook** for writing and publishing workshop lab instructions
+- **Antora** with AsciiDoc for writing and publishing workshop lab instructions
+- **RHDP Showroom** theme for deployment on OpenShift
 
 ---
 
@@ -2085,28 +2086,57 @@ volumes:
 
 ## Additional Resources for Technical Writers
 
-### Code Repository Structure
+### Workshop Repository Structure
 ```
-techcorp-assistant/
-├── src/
-│   ├── main/
-│   │   ├── java/com/techcorp/assistant/
-│   │   │   ├── embeddings/
-│   │   │   ├── rag/
-│   │   │   ├── agent/
-│   │   │   ├── security/
-│   │   │   └── optimization/
-│   │   └── resources/
-│   │       ├── application.yml
-│   │       └── data/
-│   └── test/
-├── deployment/
-│   ├── Dockerfile
-│   ├── deployment.yaml
-│   └── docker-compose.yml
-├── docs/
-│   └── modules/ (GitBook structure)
-└── pom.xml
+llm-springboot/
+├── pom.xml                                        (parent POM — modules only)
+├── .gitignore
+│
+├── site/                                          (Antora site — workshop instructions)
+│   ├── default-site.yml
+│   ├── .github/workflows/deploy-pages.yml
+│   ├── www/
+│   └── content/
+│       ├── antora.yml
+│       ├── lib/
+│       └── modules/ROOT/
+│           ├── nav.adoc
+│           ├── assets/images/
+│           ├── examples/
+│           ├── partials/
+│           └── pages/
+│               ├── index.adoc
+│               ├── module-01-vectors-embeddings.adoc
+│               ├── module-02-advanced-rag.adoc
+│               ├── module-03-tools-mcp.adoc
+│               ├── module-04-chatbots-to-agents.adoc
+│               ├── module-05-security-guardrails.adoc
+│               └── module-06-enterprise-production.adoc
+│
+├── pm/                                            (project management docs)
+│   ├── ADR.md
+│   ├── spec.md
+│   └── workshop-abstract.md
+│
+└── src/                                           (source code — Maven modules)
+    ├── module-01-vectors-embeddings/
+    │   ├── pom.xml
+    │   └── src/main/java/com/techcorp/assistant/
+    ├── module-02-advanced-rag/
+    │   ├── pom.xml
+    │   └── src/main/java/com/techcorp/assistant/
+    ├── module-03-tools-mcp/
+    │   ├── pom.xml
+    │   └── src/main/java/com/techcorp/assistant/
+    ├── module-04-chatbots-to-agents/
+    │   ├── pom.xml
+    │   └── src/main/java/com/techcorp/assistant/
+    ├── module-05-security-guardrails/
+    │   ├── pom.xml
+    │   └── src/main/java/com/techcorp/assistant/
+    └── module-06-enterprise-production/
+        ├── pom.xml
+        └── src/main/java/com/techcorp/assistant/
 ```
 
 ### Testing Strategy
