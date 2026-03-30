@@ -69,6 +69,25 @@ Then visit http://localhost:8443.
 
 There is no long-running dev server or file watcher. The container starts, builds the site, and exits. After editing any `.adoc` file, re-run the same `docker run` (or `podman run`) command above and refresh your browser. No containers need to be restarted -- each run is a clean, one-shot build that overwrites `output/`.
 
+You can use fswatch to watch for changed for example
+
+```bash
+
+  # Install once
+  brew install fswatch
+  # Terminal 1 — serve
+  npx http-server output -p 8443
+  # Terminal 2 — watch and rebuild on save
+  fswatch -o llm-springboot/site/content/ | while read; do
+    docker run --user=$(id -u) --rm \
+      -v $(pwd):/showroom/repo \
+      --mount 'type=tmpfs,dst=/showroom/repo/.cache,tmpfs-mode=1777' \
+      --entrypoint antora -w /showroom/repo \
+      ghcr.io/rhpds/showroom-content:latest default-site.yml
+  done
+
+```
+
 ## Contributing
 
 ### Project Structure
