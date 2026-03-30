@@ -130,7 +130,7 @@ Use **Antora** with **AsciiDoc** for all workshop instructions, styled with the 
 - Workshop content is authored in `.adoc` files under `site/content/modules/ROOT/pages/`.
 - Navigation is defined in `site/content/modules/ROOT/nav.adoc`.
 - Site is built using the `ghcr.io/rhpds/showroom-content` container image.
-- GitHub Actions workflow (`site/.github/workflows/deploy-pages.yml`) deploys to GitHub Pages automatically on push to `main`.
+- GitHub Actions workflow (`.github/workflows/deploy-pages.yml` at repo root) deploys to GitHub Pages automatically on push to `main` when `llm-springboot/site/**` changes.
 - Native integration with RHDP showroom — supports variable substitution (e.g., `{lab_name}`, cluster URLs) for per-environment customization.
 - AsciiDoc is richer than Markdown for technical content (admonitions, includes, conditional content, tabs).
 - GitBook is no longer part of the toolchain.

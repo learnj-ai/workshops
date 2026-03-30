@@ -3,6 +3,8 @@ name: Deploy static content to Pages
 on:
   push:
     branches: ["main"]
+    paths:
+      - 'llm-springboot/site/**'
   workflow_dispatch:
 
 permissions:
@@ -20,17 +22,20 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: llm-springboot/site
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Pages
+      - name: Build Antora site
         run: |
           mkdir output
           docker run --user=$(id -u) --rm -v `pwd`:/showroom/repo --mount 'type=tmpfs,dst=/showroom/repo/.cache' --entrypoint antora -w /showroom/repo ghcr.io/rhpds/showroom-content:latest --to-dir=output default-site.yml
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'output'
+          path: 'llm-springboot/site/output'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
