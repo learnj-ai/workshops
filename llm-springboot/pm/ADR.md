@@ -225,3 +225,35 @@ Each module has its own `pom.xml` with a `<parent>` reference back to the worksh
 - Later modules can depend on earlier ones if code reuse is needed.
 - `mvn install` from the workshop root builds everything; `mvn install -pl src/module-01-vectors-embeddings` builds just one.
 - Module naming follows a `module-NN-slug` convention matching the Antora page filenames for traceability.
+
+---
+
+## ADR-010: Module 01 — In-Process Embeddings and In-Memory Vector Store
+
+**Date:** 2026-04-12
+**Status:** Accepted
+
+### Context
+
+Module 01 (Vectors & Embeddings) is the first hands-on module. Students need to understand embeddings, distance metrics, chunking, and vector search before introducing external infrastructure like ChromaDB. We needed to decide whether Module 01 should start with a full vector database or keep dependencies minimal so students focus on the concepts.
+
+### Decision
+
+Module 01 uses:
+
+- **In-process embedding model** (`langchain4j-embeddings-all-minilm-l6-v2`) — runs entirely inside the JVM, no external API calls or GPU required.
+- **In-memory vector store** — a custom `VectorStoreService` that indexes document segments and performs brute-force nearest-neighbor search at query time.
+- **Three similarity metrics** (cosine, dot product, Euclidean) implemented from scratch in `SimilarityCalculator`, so students see the math before relying on library abstractions.
+- **A pluggable chunking layer** (`DocumentChunker` with `ChunkingStrategy`) to demonstrate how chunk size and overlap affect retrieval quality.
+- **Sample knowledge-base documents** (`password-reset.md`, `api-rate-limits.md`, `vpn-access.md`) representing realistic enterprise support content.
+- **A REST API** (`VectorSearchController`) exposing `/api/search` so students can experiment with queries interactively.
+
+ChromaDB (ADR-003) is deferred to Module 02, where it replaces the in-memory store and introduces persistent, scalable vector storage.
+
+### Consequences
+
+- Zero external dependencies for Module 01 — students run `mvn spring-boot:run` and immediately have a working semantic search service.
+- Students learn what a vector store *does* before using one as a black box.
+- The in-memory store is intentionally naive (linear scan) to motivate why production systems use ANN indexes — a teaching point for Module 02.
+- The MiniLM model (~80 MB) is bundled as a Maven dependency and downloads once; no API keys needed.
+- Module 01's `VectorStoreService` and `SimilarityCalculator` become throwaway code once ChromaDB is introduced, which is acceptable — the goal is understanding, not reuse.
