@@ -257,3 +257,72 @@ ChromaDB (ADR-003) is deferred to Module 02, where it replaces the in-memory sto
 - The in-memory store is intentionally naive (linear scan) to motivate why production systems use ANN indexes — a teaching point for Module 02.
 - The MiniLM model (~80 MB) is bundled as a Maven dependency and downloads once; no API keys needed.
 - Module 01's `VectorStoreService` and `SimilarityCalculator` become throwaway code once ChromaDB is introduced, which is acceptable — the goal is understanding, not reuse.
+
+---
+
+## ADR-011: Upgrade to Spring Boot 4.0.5 for Java 25 Support
+
+**Date:** 2026-04-12
+**Status:** Accepted
+**Supersedes:** ADR-002 (technology stack — Spring Boot version only)
+
+### Context
+
+ADR-002 specified Spring Boot 3.4 as the application framework. However, Spring Boot 3.4.0 bundles Spring Framework 6.2.0, whose embedded ASM library only supports class files up to Java 23 (major version 67). Compiling with Java 25 (`--enable-preview`) produces class files with major version 69, causing `ClassFormatException: Unsupported class file major version 69` at startup.
+
+Java 25 preview features — particularly `StructuredTaskScope` for structured concurrency — are valuable teaching tools for the workshop.
+
+### Decision
+
+Upgrade the parent POM from **Spring Boot 3.4.0 → 4.0.5**, which ships **Spring Framework 7.0.6** with ASM support for Java 25 class files. Set `<java.version>25</java.version>` in the parent POM and enable `--enable-preview` globally via `maven-compiler-plugin` and `maven-surefire-plugin`.
+
+### Consequences
+
+- All modules compile and run on Java 25 with preview features enabled.
+- `StructuredTaskScope` can be used for structured concurrency (e.g., parallel search comparison in `RAGController`).
+- Spring Framework 7.0 introduces API changes that required test updates:
+  - `MockHttpServletRequestBuilder.contentType()` now takes `String` instead of `MediaType` — use `MediaType.APPLICATION_JSON_VALUE`.
+  - `@AutoConfigureMockMvc` was removed — controller tests use `MockMvcBuilders.standaloneSetup()` instead.
+  - With multiple constructors, Spring no longer auto-selects the public one — `@Autowired` is required to disambiguate.
+- ADR-002's technology stack is now: Spring Boot 4.0.5, LangChain4J 1.11, Java 25.
+
+---
+
+## ADR-012: Module 02 — Hybrid RAG Pipeline with BM25, RRF, and LLM-Powered Query Expansion
+
+**Date:** 2026-04-12
+**Status:** Accepted
+
+### Context
+
+Module 02 (Advanced RAG) builds on Module 01's vector search to teach students why naive vector-only retrieval is insufficient for production use. Students need to see:
+1. Where keyword search outperforms vector search (exact terms like "SEV1", "HTTP 429").
+2. How to combine both retrieval methods without losing results from either.
+3. How query transformation techniques improve recall.
+4. How the full RAG pipeline ties retrieval to LLM-generated answers.
+
+We needed to decide the retrieval architecture, which LLM provider to use, and how to introduce the first external API dependency.
+
+### Decision
+
+Module 02 implements a complete RAG pipeline with the following components:
+
+- **BM25/TF-IDF keyword search** (`KeywordSearchService`) — implemented from scratch so students see term frequency, inverse document frequency, and length normalization before using a library.
+- **Reciprocal Rank Fusion (RRF)** in `HybridSearchService` — merges vector and keyword ranked lists with a constant k=60, producing a single ranked list without needing score normalization.
+- **Embedding-based re-ranker** (`EmbeddingBasedReRanker` implementing `ReRanker` interface) — re-ranks merged candidates using cosine similarity. This is a bi-encoder approach; the `ReRanker` interface is designed so a cross-encoder (e.g., ms-marco-MiniLM) can be plugged in later.
+- **Query transformation** (`QueryTransformer`) — two techniques using `ChatModel`:
+  - *Multi-query*: generates 3 alternative phrasings to increase recall.
+  - *HyDE (Hypothetical Document Embeddings)*: generates a hypothetical answer document, then uses its embedding for vector-only retrieval.
+- **RAG pipeline** (`RAGService`) — orchestrates the full flow: query expansion → hybrid retrieval per query variant → deduplication → context assembly → LLM answer generation.
+- **Search comparison endpoint** (`POST /api/v1/rag/compare`) — returns vector-only, keyword-only, and hybrid results side-by-side so students can compare retrieval quality. Uses `StructuredTaskScope` for parallel execution (Java 25 preview).
+- **OpenAI as the LLM provider** (`langchain4j-open-ai`) — configured via `OPENAI_API_KEY` environment variable. This is the first module requiring an external API key.
+- **Expanded knowledge base** — 7 documents (3 from Module 01 + 4 new: employee onboarding, incident response, database access, deployment process) to provide enough content for meaningful retrieval comparisons.
+- **Structured pipeline logging** — each RAG stage logs timing, query alternatives, retrieval counts, segment previews, and context size so students can observe the pipeline behavior in real time.
+
+### Consequences
+
+- Module 02 requires an OpenAI API key (set via `OPENAI_API_KEY` env var) — this is the first external dependency beyond the JVM. Students who don't have a key can still use the `/api/v1/rag/compare` endpoint to study retrieval without LLM generation.
+- The BM25 implementation is educational, not production-grade (no stop-word removal, no stemming). This is intentional — students learn the algorithm before using Lucene/Elasticsearch.
+- The `ReRanker` interface allows swapping in a cross-encoder model in later modules without changing the pipeline.
+- The `/compare` endpoint is a powerful teaching tool — students can craft queries where keyword search wins, vector search wins, or hybrid search wins, building intuition for when to use each.
+- Module 01's foundation code (embeddings, chunking, similarity, vector store) is copied into Module 02 rather than referenced as a Maven dependency, keeping each module self-contained and independently runnable.

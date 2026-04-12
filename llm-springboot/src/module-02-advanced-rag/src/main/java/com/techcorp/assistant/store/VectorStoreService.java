@@ -10,6 +10,9 @@ import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import jakarta.annotation.PostConstruct;
+
+import java.time.Duration;
+import java.time.Instant;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +50,7 @@ public class VectorStoreService {
     @PostConstruct
     protected void initialize() {
         log.info("Loading documents and building vector indexes...");
-        long start = System.currentTimeMillis();
+        Instant start = Instant.now();
 
         List<Document> documents = documentLoader.loadDocuments();
         log.info("Loaded {} documents", documents.size());
@@ -58,7 +61,7 @@ public class VectorStoreService {
             log.info("Indexed {} segments using {} strategy", index.size(), strategy);
         }
 
-        long elapsed = System.currentTimeMillis() - start;
+        long elapsed = Duration.between(start, Instant.now()).toMillis();
         log.info("Vector index initialization completed in {}ms", elapsed);
     }
 
@@ -72,12 +75,22 @@ public class VectorStoreService {
                 .toList();
     }
 
+    public List<TextSegment> searchSegments(String query, int maxResults) {
+        return search(query, maxResults, SearchMetric.COSINE, ChunkingStrategy.RECURSIVE).stream()
+                .map(match -> TextSegment.from(match.content()))
+                .toList();
+    }
+
     public int embeddingDimension() {
         return embeddingService.dimension();
     }
 
     public int indexedSegmentCount(ChunkingStrategy strategy) {
         return indexes.getOrDefault(strategy, List.of()).size();
+    }
+
+    public List<IndexedSegment> getAllSegments(ChunkingStrategy strategy) {
+        return indexes.getOrDefault(strategy, List.of());
     }
 
     private List<IndexedSegment> buildIndex(List<Document> documents, ChunkingStrategy strategy) {

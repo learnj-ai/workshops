@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: module-02-advanced-rag
+
+server:
+  port: 8082
+
+langchain4j:
+  open-ai:
+    api-key: ${OPENAI_API_KEY:demo}
+    model-name: ${OPENAI_MODEL:gpt-4.1-nano}

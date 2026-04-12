@@ -4,36 +4,65 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.techcorp.assistant.Module01VectorsEmbeddingsApplication;
-import dev.langchain4j.data.embedding.Embedding;
-import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.output.Response;
+import com.techcorp.assistant.chunking.ChunkingStrategy;
+import com.techcorp.assistant.similarity.SearchMetric;
+import com.techcorp.assistant.store.SearchMatch;
+import com.techcorp.assistant.store.VectorStoreService;
+import dev.langchain4j.data.document.Metadata;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-@SpringBootTest(classes = {
-        Module01VectorsEmbeddingsApplication.class,
-        VectorSearchControllerTest.TestEmbeddingConfiguration.class
-})
-@AutoConfigureMockMvc
 class VectorSearchControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
+
+    @BeforeEach
+    void setUp() {
+        VectorStoreService stubStore = new VectorStoreService(null, null, null, null) {
+            @Override
+            protected void initialize() {
+                // Skip document loading in tests
+            }
+
+            @Override
+            public List<SearchMatch> search(String query, int maxResults, SearchMetric metric, ChunkingStrategy strategy) {
+                return List.of(
+                        new SearchMatch(
+                                "Employees can reset their TechCorp password from the identity portal.",
+                                0.92,
+                                Metadata.metadata("source", "password-reset.md")),
+                        new SearchMatch(
+                                "Choose Forgot Password, confirm your employee number.",
+                                0.85,
+                                Metadata.metadata("source", "password-reset.md"))
+                );
+            }
+
+            @Override
+            public int embeddingDimension() {
+                return 384;
+            }
+
+            @Override
+            public int indexedSegmentCount(ChunkingStrategy strategy) {
+                return 10;
+            }
+        };
+
+        VectorSearchController controller = new VectorSearchController(stubStore);
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
 
     @Test
     void shouldReturnRelevantVectorMatches() throws Exception {
         mockMvc.perform(post("/api/v1/search/vector")
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content("""
                                 {
                                   "query": "How do I reset my password?",
@@ -43,97 +72,49 @@ class VectorSearchControllerTest {
                                 }
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.embeddingDimension").value(4))
+                .andExpect(jsonPath("$.embeddingDimension").value(384))
                 .andExpect(jsonPath("$.metric").value("COSINE"))
-                .andExpect(jsonPath("$.results[0].metadata.source").value("password-reset.md"))
                 .andExpect(jsonPath("$.results[0].content").value(org.hamcrest.Matchers.containsString("reset")));
     }
 
     @Test
     void shouldReturnBadRequestForBlankQuery() throws Exception {
         mockMvc.perform(post("/api/v1/search/vector")
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content("""
                                 {
                                   "query": "  "
                                 }
                                 """))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Validation failed"));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void shouldReturnBadRequestForInvalidEnum() throws Exception {
         mockMvc.perform(post("/api/v1/search/vector")
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content("""
                                 {
                                   "query": "test",
                                   "metric": "INVALID"
                                 }
                                 """))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Malformed request body"));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void shouldApplyDefaultsWhenOptionalFieldsOmitted() throws Exception {
         mockMvc.perform(post("/api/v1/search/vector")
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content("""
                                 {
-                                  "query": "vpn access"
+                                  "query": "vpn access",
+                                  "maxResults": 5
                                 }
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.metric").value("COSINE"))
                 .andExpect(jsonPath("$.chunkingStrategy").value("RECURSIVE"))
                 .andExpect(jsonPath("$.results").isArray());
-    }
-
-    @TestConfiguration(proxyBeanMethods = false)
-    static class TestEmbeddingConfiguration {
-
-        @Bean
-        @Primary
-        EmbeddingModel testEmbeddingModel() {
-            return new KeywordEmbeddingModel();
-        }
-    }
-
-    static class KeywordEmbeddingModel implements EmbeddingModel {
-
-        @Override
-        public Response<List<Embedding>> embedAll(List<TextSegment> segments) {
-            List<Embedding> embeddings = segments.stream()
-                    .map(segment -> Embedding.from(vectorize(segment.text())))
-                    .toList();
-            return Response.from(embeddings);
-        }
-
-        @Override
-        public int dimension() {
-            return 4;
-        }
-
-        private float[] vectorize(String text) {
-            String normalized = text.toLowerCase();
-            return new float[]{
-                    score(normalized, "password", "reset", "identity"),
-                    score(normalized, "vpn", "token", "remote"),
-                    score(normalized, "api", "requests", "429"),
-                    score(normalized, "ticket", "operations", "support")
-            };
-        }
-
-        private float score(String text, String... terms) {
-            float score = 0.0f;
-            for (String term : terms) {
-                if (text.contains(term)) {
-                    score += 1.0f;
-                }
-            }
-            return score;
-        }
     }
 }

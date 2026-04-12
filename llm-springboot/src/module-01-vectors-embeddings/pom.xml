@@ -16,7 +16,6 @@
     <description>The Physics of AI — embedding generation, distance metrics, chunking, and vector store integration</description>
 
     <properties>
-        <java.version>21</java.version>
         <langchain4j.embedding-model.version>1.11.0-beta19</langchain4j.embedding-model.version>
     </properties>
 
