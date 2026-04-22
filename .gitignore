@@ -1,3 +1,6 @@
 # Antora build output
 output/
 .cache/
+
+# IDE
+.idea/

@@ -49,6 +49,8 @@ docker run --user=$(id -u) --rm \
   default-site.yml
 ```
 
+If your shell prompt still shows `llm-springboot %`, you are in the wrong directory for this command. The playbook file is at the repository root, not inside `llm-springboot/`.
+
 > **Note:** Replace `docker` with `podman` if that is your container runtime.
 
 The generated site will be in the `output/` directory at the repository root. Open it in your browser:
