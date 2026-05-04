@@ -1,0 +1,96 @@
+{
+  "name": "RAG Evaluation Golden Set",
+  "description": "Test cases for evaluating RAG system performance using Dokimos",
+  "examples": [
+    {
+      "input": "What security features does the product offer?",
+      "expected": "The product offers enterprise-grade security features including encryption at rest and in transit.",
+      "metadata": {
+        "id": "tc001",
+        "category": "product_features",
+        "difficulty": "easy"
+      }
+    },
+    {
+      "input": "How can I contact customer support?",
+      "expected": "Customer support is available 24/7 via phone, email, and chat.",
+      "metadata": {
+        "id": "tc002",
+        "category": "support",
+        "difficulty": "easy"
+      }
+    },
+    {
+      "input": "What is the pricing for the basic plan?",
+      "expected": "Pricing starts at $99/month for the basic plan.",
+      "metadata": {
+        "id": "tc003",
+        "category": "pricing",
+        "difficulty": "easy"
+      }
+    },
+    {
+      "input": "Does the product support encryption?",
+      "expected": "Yes, the product supports encryption at rest and in transit.",
+      "metadata": {
+        "id": "tc004",
+        "category": "product_features",
+        "difficulty": "medium"
+      }
+    },
+    {
+      "input": "What are the support hours?",
+      "expected": "Support is available 24/7.",
+      "metadata": {
+        "id": "tc005",
+        "category": "support",
+        "difficulty": "easy"
+      }
+    },
+    {
+      "input": "Is there a trial period?",
+      "expected": "I don't have enough information to answer that.",
+      "metadata": {
+        "id": "tc006",
+        "category": "pricing",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "input": "What encryption methods are used?",
+      "expected": "The product uses encryption at rest and in transit.",
+      "metadata": {
+        "id": "tc007",
+        "category": "product_features",
+        "difficulty": "medium"
+      }
+    },
+    {
+      "input": "Can I reach support via chat?",
+      "expected": "Yes, customer support is available via chat, as well as phone and email.",
+      "metadata": {
+        "id": "tc008",
+        "category": "support",
+        "difficulty": "easy"
+      }
+    },
+    {
+      "input": "What is the most affordable plan?",
+      "expected": "The basic plan starts at $99/month.",
+      "metadata": {
+        "id": "tc009",
+        "category": "pricing",
+        "difficulty": "medium"
+      }
+    },
+    {
+      "input": "Does the product have enterprise features?",
+      "expected": "Yes, the product offers enterprise-grade security features.",
+      "metadata": {
+        "id": "tc010",
+        "category": "product_features",
+        "difficulty": "medium"
+      }
+    }
+  ]
+}

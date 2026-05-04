@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # PostgreSQL for Module 03 (Tools) and beyond
+  postgres:
+    image: postgres:16-alpine
+    container_name: llm-workshop-postgres
+    environment:
+      POSTGRES_DB: workshop_db
+      POSTGRES_USER: workshop
+      POSTGRES_PASSWORD: workshop123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/module-03-tools-mcp/src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./src/module-03-tools-mcp/src/main/resources/db/data.sql:/docker-entrypoint-initdb.d/02-data.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workshop"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Module 04 (Agents memory) and Module 06 (Caching)
+  redis:
+    image: redis:7-alpine
+    container_name: llm-workshop-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ChromaDB for Module 02 (Advanced RAG) - vector database
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: llm-workshop-chroma
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - ANONYMIZED_TELEMETRY=False
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Prometheus for Module 06 (Metrics collection)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: llm-workshop-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Grafana for Module 06 (Metrics visualization)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: llm-workshop-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
+  redis_data:
+  chroma_data:
+  prometheus_data:
+  grafana_data:
