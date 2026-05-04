@@ -19,7 +19,29 @@ A hands-on workshop that transforms developers into AI architects using Spring B
 - Maven 3.9+
 - Docker (or Podman)
 
-## Building the Source Code
+## Quick Start
+
+### 1. Set Environment Variables
+
+```bash
+export OPENAI_API_KEY=your-api-key-here
+export OPENAI_MODEL_NAME=gpt-4  # or gpt-3.5-turbo
+```
+
+### 2. Start Infrastructure Services
+
+```bash
+docker compose up -d
+```
+
+This starts:
+- PostgreSQL (port 5432) - for Module 03 tools
+- Redis (port 6379) - for Module 04 & 06 caching/memory
+- ChromaDB (port 8000) - for Module 02 vector search
+- Prometheus (port 9090) - for Module 06 metrics
+- Grafana (port 3000) - for Module 06 dashboards
+
+### 3. Build All Modules
 
 From this directory:
 
@@ -30,8 +52,77 @@ mvn clean install
 To build a single module:
 
 ```bash
-mvn clean install -pl src/module-01-vectors-embeddings
+mvn clean install -pl src/module-03-tools-mcp
 ```
+
+### 4. Run a Module
+
+Each module runs on a different port:
+- Module 01: 8081
+- Module 02: 8082
+- Module 03: 8083
+- Module 04: 8084
+- Module 05: 8085
+- Module 06: 8086
+
+```bash
+cd src/module-03-tools-mcp
+mvn spring-boot:run
+```
+
+### 5. Test the Endpoints
+
+```bash
+# Module 03: Tools & MCP
+curl -X POST http://localhost:8083/api/v1/assistant/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Show me customer with ID 1"}'
+
+# Module 04: Agents
+curl -X POST http://localhost:8084/api/v1/agent/execute \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Help me with a product question", "sessionId": "test123"}'
+
+# Module 05: Security
+curl -X POST http://localhost:8085/api/v1/secure/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What security features do you offer?", "userId": "user1", "userRoles": ["user"], "department": "engineering"}'
+
+# Module 06: Production
+curl -X POST http://localhost:8086/api/v1/production/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Tell me about your product"}'
+```
+
+## Module Details
+
+### Module 03: Tools & MCP
+- **Endpoint**: `/api/v1/assistant/chat`
+- **Features**: Database tools, external API tools, tool orchestration
+- **Dependencies**: PostgreSQL
+
+### Module 04: Chatbots to Agents
+- **Endpoint**: `/api/v1/agent/execute`
+- **Features**: ReAct agents, conversation memory, multi-agent orchestration, task decomposition
+- **Dependencies**: Redis, PostgreSQL
+
+### Module 05: Security & Guardrails
+- **Endpoint**: `/api/v1/secure/query`
+- **Features**: Prompt injection defense, PII masking, output validation, access control, audit logging
+- **Dependencies**: Redis
+
+### Module 06: Enterprise & Production
+- **Endpoints**: `/api/v1/production/query`, `/api/v1/evaluation/run`
+- **Features**: Evaluation framework, distributed tracing, metrics, caching, token optimization
+- **Dependencies**: Redis
+- **Monitoring**: Prometheus (http://localhost:9090), Grafana (http://localhost:3000, admin/admin)
+
+## Documentation
+
+- **Sample Queries**: [docs/sample-queries.md](docs/sample-queries.md)
+- **Troubleshooting**: [docs/troubleshooting.md](docs/troubleshooting.md)
+- **Architecture**: [docs/architecture.md](docs/architecture.md)
+- **ADR**: [ADR.md](ADR.md)
 
 ## Running the Workshop Site Locally
 

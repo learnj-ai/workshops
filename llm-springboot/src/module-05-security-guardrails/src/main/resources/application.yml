@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: module-05-security-guardrails
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+
+server:
+  port: 8085
+
+openai:
+  api:
+    key: ${OPENAI_API_KEY}
+  model:
+    name: ${OPENAI_MODEL_NAME:gpt-4}
+  validator:
+    model:
+      name: gpt-3.5-turbo
+      temperature: 0.0
+
+security:
+  audit:
+    enabled: true
+    redis-key: security-events
+    max-events: 1000
+  pii:
+    masking-enabled: true
+  prompt-injection:
+    enabled: true
+    max-special-char-ratio: 0.30
+
+logging:
+  level:
+    com.techcorp.assistant.module05: DEBUG
+    com.techcorp.assistant.module05.security: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
