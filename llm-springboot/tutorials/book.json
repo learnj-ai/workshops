@@ -1,0 +1,19 @@
+{
+  "title": "LLM Spring Boot Workshop - Complete Guide",
+  "description": "A comprehensive guide to building LLM-powered applications with Spring Boot",
+  "author": "LearnJ AI",
+  "language": "en",
+  "root": ".",
+  "structure": {
+    "readme": "README.md",
+    "summary": "SUMMARY.md"
+  },
+  "plugins": [
+    "mermaid-hybrid"
+  ],
+  "pluginsConfig": {},
+  "variables": {
+    "workshop": "LLM Spring Boot",
+    "version": "1.0"
+  }
+}
