@@ -1,0 +1,29 @@
+{
+  "title": "Module 05: Security and Guardrails",
+  "description": "Learn to build comprehensive security guardrails for production LLM applications",
+  "author": "TechCorp AI Workshop Team",
+  "language": "en",
+  "gitbook": ">=3.0.0",
+  "plugins": [
+    "mermaid-hybrid",
+    "code",
+    "splitter",
+    "sharing",
+    "expandable-chapters"
+  ],
+  "pluginsConfig": {
+    "sharing": {
+      "facebook": false,
+      "twitter": false,
+      "all": ["twitter", "linkedin"]
+    }
+  },
+  "links": {
+    "sidebar": {
+      "Workshop Home": "https://github.com/learnj-ai/workshops"
+    }
+  },
+  "styles": {
+    "website": "styles/website.css"
+  }
+}

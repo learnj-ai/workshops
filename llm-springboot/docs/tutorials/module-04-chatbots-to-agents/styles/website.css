@@ -1,0 +1,265 @@
+/* Module 04: From Chatbots to Agents - Custom Styles */
+
+/* Color scheme */
+:root {
+    --primary-color: #6366f1;
+    --secondary-color: #8b5cf6;
+    --accent-color: #ec4899;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --dark-bg: #1e293b;
+    --light-bg: #f8fafc;
+    --border-color: #e2e8f0;
+}
+
+/* Enhanced headings */
+.markdown-section h1 {
+    color: var(--primary-color);
+    border-bottom: 3px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+    margin-top: 2rem;
+    font-weight: 700;
+}
+
+.markdown-section h2 {
+    color: var(--secondary-color);
+    border-left: 4px solid var(--secondary-color);
+    padding-left: 1rem;
+    margin-top: 1.5rem;
+}
+
+.markdown-section h3 {
+    color: var(--accent-color);
+    margin-top: 1.25rem;
+}
+
+/* Code blocks */
+.markdown-section pre {
+    background-color: var(--dark-bg);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+.markdown-section code {
+    background-color: #f1f5f9;
+    color: var(--primary-color);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.9em;
+}
+
+.markdown-section pre code {
+    background-color: transparent;
+    color: #e2e8f0;
+    padding: 0;
+}
+
+/* Blockquotes and callouts */
+.markdown-section blockquote {
+    border-left: 4px solid var(--warning-color);
+    background-color: #fef3c7;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+}
+
+/* Practice Exercise boxes */
+.markdown-section blockquote:has(strong:first-child:contains("Practice Exercise")) {
+    border-left-color: var(--success-color);
+    background-color: #d1fae5;
+}
+
+/* Warning boxes */
+.markdown-section blockquote:has(strong:first-child:contains("Warning")) {
+    border-left-color: var(--danger-color);
+    background-color: #fee2e2;
+}
+
+/* Info boxes */
+.markdown-section blockquote:has(strong:first-child:contains("Note")) {
+    border-left-color: var(--primary-color);
+    background-color: #dbeafe;
+}
+
+/* Tables */
+.markdown-section table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.markdown-section table thead {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.markdown-section table th {
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+}
+
+.markdown-section table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.markdown-section table tbody tr:hover {
+    background-color: var(--light-bg);
+}
+
+/* Links */
+.markdown-section a {
+    color: var(--primary-color);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: border-bottom-color 0.3s;
+}
+
+.markdown-section a:hover {
+    border-bottom-color: var(--primary-color);
+}
+
+/* Images */
+.markdown-section img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 1.5rem 0;
+}
+
+/* Lists */
+.markdown-section ul,
+.markdown-section ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+}
+
+.markdown-section li {
+    margin: 0.5rem 0;
+    line-height: 1.6;
+}
+
+/* Navigation */
+.book-summary {
+    background-color: var(--light-bg);
+}
+
+.book-summary ul.summary li a {
+    color: var(--dark-bg);
+    transition: all 0.3s;
+}
+
+.book-summary ul.summary li.active > a {
+    color: var(--primary-color);
+    font-weight: 600;
+    border-left: 3px solid var(--primary-color);
+    background-color: white;
+}
+
+.book-summary ul.summary li a:hover {
+    background-color: white;
+    color: var(--secondary-color);
+}
+
+/* Page navigation */
+.navigation {
+    border-top: 2px solid var(--border-color);
+    padding-top: 1rem;
+}
+
+/* Badges for difficulty, time, etc. */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
+.badge-difficulty {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.badge-time {
+    background-color: var(--warning-color);
+    color: white;
+}
+
+.badge-level {
+    background-color: var(--success-color);
+    color: white;
+}
+
+/* Mermaid diagrams */
+.mermaid {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+/* Search */
+#book-search-input {
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.5rem;
+    transition: border-color 0.3s;
+}
+
+#book-search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* Scrollbar customization */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--light-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color);
+}
+
+/* Print styles */
+@media print {
+    .book-summary,
+    .navigation {
+        display: none;
+    }
+
+    .markdown-section {
+        max-width: 100%;
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .markdown-section h1 {
+        font-size: 1.75rem;
+    }
+
+    .markdown-section h2 {
+        font-size: 1.5rem;
+    }
+
+    .markdown-section pre {
+        font-size: 0.85rem;
+    }
+}

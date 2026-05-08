@@ -1,0 +1,27 @@
+{
+  "name": "llm-spring-boot-workshop",
+  "version": "1.0.0",
+  "description": "Building Production-Ready LLM Applications with Spring Boot - Complete Workshop",
+  "scripts": {
+    "install": "npm install honkit honkit-plugin-mermaid-hybrid --save-dev",
+    "serve": "npx honkit serve",
+    "build": "npx honkit build",
+    "pdf": "npx honkit pdf",
+    "clean": "rm -rf _book node_modules"
+  },
+  "keywords": [
+    "llm",
+    "spring-boot",
+    "langchain4j",
+    "rag",
+    "embeddings",
+    "agents",
+    "tutorial"
+  ],
+  "author": "A N M Balzur, Shaaf Syed",
+  "license": "MIT",
+  "devDependencies": {
+    "honkit": "^5.1.5",
+    "honkit-plugin-mermaid-hybrid": "^1.0.2"
+  }
+}

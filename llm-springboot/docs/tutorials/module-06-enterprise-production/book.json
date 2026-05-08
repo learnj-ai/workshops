@@ -1,0 +1,19 @@
+{
+  "title": "Enterprise Production Best Practices: Production-Ready LLM Applications",
+  "description": "Master enterprise patterns for deploying LLM applications to production, including evaluation frameworks, distributed tracing, caching, metrics, and Kubernetes deployment strategies.",
+  "author": "A N M Balzur, Shaaf Syed",
+  "language": "en",
+  "gitbook": "3.x.x",
+  "plugins": [
+    "mermaid-hybrid"
+  ],
+  "pluginsConfig": {},
+  "variables": {
+    "module": "Module 06",
+    "difficulty": "Advanced",
+    "estimatedTime": "6-8 hours"
+  },
+  "styles": {
+    "website": "styles/website.css"
+  }
+}
