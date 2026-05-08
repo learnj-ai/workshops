@@ -1,7 +1,0 @@
-* xref:index.adoc[Overview]
-* xref:module-01-vectors-embeddings.adoc[Module 1: Vectors & Embeddings]
-* xref:module-02-advanced-rag.adoc[Module 2: Advanced RAG]
-* xref:module-03-tools-mcp.adoc[Module 3: Tools & MCP]
-* xref:module-04-chatbots-to-agents.adoc[Module 4: From Chatbots to Agents]
-* xref:module-05-security-guardrails.adoc[Module 5: Security & Guardrails]
-* xref:module-06-enterprise-production.adoc[Module 6: Enterprise Best Practices & Production]
