@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'llm-springboot/docs/tutorials/**'
+      - 'docs/tutorials/module-01-vector-embeddings/**'
   workflow_dispatch:
 
 permissions:
