@@ -1,0 +1,18 @@
+# HonKit build output
+_book/
+*.pdf
+*.epub
+*.mobi
+
+# Node modules
+node_modules/
+package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml

@@ -1,0 +1,20 @@
+{
+  "title": "Building Production-Ready LLM Applications with Spring Boot",
+  "description": "A comprehensive workshop covering vector embeddings, advanced RAG, tool integration, agent architectures, security guardrails, and enterprise production deployment using Spring Boot and LangChain4J.",
+  "author": "A N M Balzur, Shaaf Syed",
+  "language": "en",
+  "gitbook": "3.x.x",
+  "plugins": [
+    "mermaid-hybrid"
+  ],
+  "pluginsConfig": {},
+  "variables": {
+    "workshop": "LLM Applications with Spring Boot",
+    "modules": "6 Modules",
+    "difficulty": "Beginner to Advanced",
+    "estimatedTime": "25-30 hours"
+  },
+  "styles": {
+    "website": "styles/website.css"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "title": "Advanced RAG: Building Production-Grade Retrieval Systems",
+  "description": "Master advanced RAG techniques including hybrid search, query transformation, cross-encoder re-ranking, and complete RAG pipelines by building a production-ready Spring Boot application.",
+  "author": "A N M Balzur, Shaaf Syed",
+  "language": "en",
+  "gitbook": "3.x.x",
+  "plugins": [
+    "mermaid-hybrid"
+  ],
+  "pluginsConfig": {},
+  "variables": {
+    "module": "Module 02",
+    "difficulty": "Advanced",
+    "estimatedTime": "6 hours"
+  },
+  "styles": {
+    "website": "styles/website.css"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "module-06-enterprise-production-tutorial",
+  "version": "1.0.0",
+  "description": "Enterprise Production Best Practices Tutorial for LLM Applications",
+  "scripts": {
+    "build": "honkit build",
+    "serve": "honkit serve"
+  },
+  "dependencies": {
+    "honkit": "^4.0.0",
+    "honkit-plugin-mermaid-hybrid": "^1.0.0"
+  }
+}

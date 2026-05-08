@@ -1,0 +1,60 @@
+{
+  "title": "From Chatbots to Agents: Building Intelligent AI Systems",
+  "description": "A comprehensive guide to building intelligent AI agents with ReAct pattern, memory, multi-agent orchestration, and task decomposition using Spring Boot and LangChain4j",
+  "author": "LLM Spring Boot Workshop",
+  "language": "en",
+  "gitbook": "3.2.3",
+  "structure": {
+    "readme": "README.md",
+    "summary": "SUMMARY.md"
+  },
+  "plugins": [
+    "theme-default",
+    "code",
+    "prism",
+    "-highlight",
+    "github",
+    "anchorjs",
+    "splitter",
+    "back-to-top-button",
+    "expandable-chapters-small",
+    "insert-logo",
+    "custom-favicon",
+    "scripts"
+  ],
+  "pluginsConfig": {
+    "github": {
+      "url": "https://github.com/learnj-ai/workshops"
+    },
+    "insert-logo": {
+      "url": "https://raw.githubusercontent.com/learnj-ai/workshops/main/docs/images/logo.png",
+      "style": "background: none; max-height: 100px;"
+    },
+    "theme-default": {
+      "showLevel": true,
+      "styles": {
+        "website": "styles/website.css"
+      }
+    },
+    "prism": {
+      "lang": {
+        "flow": "typescript"
+      }
+    },
+    "scripts": {
+      "files": []
+    }
+  },
+  "variables": {
+    "module": "module-04-chatbots-to-agents",
+    "difficulty": "Advanced",
+    "estimatedTime": "4-6 hours",
+    "prerequisites": [
+      "Java 17+",
+      "Spring Boot knowledge",
+      "LangChain4j basics",
+      "PostgreSQL",
+      "Redis"
+    ]
+  }
+}

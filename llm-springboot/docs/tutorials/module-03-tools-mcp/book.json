@@ -1,0 +1,19 @@
+{
+  "title": "Tools and MCP: Empowering LLMs with Real-World Data",
+  "description": "Master tool integration and the Model Context Protocol by building a Spring Boot AI assistant that connects to databases and external APIs, enabling intelligent automation and data-driven responses.",
+  "author": "A N M Balzur, Shaaf Syed",
+  "language": "en",
+  "gitbook": "3.x.x",
+  "plugins": [
+    "mermaid-hybrid"
+  ],
+  "pluginsConfig": {},
+  "variables": {
+    "module": "Module 03",
+    "difficulty": "Intermediate",
+    "estimatedTime": "5 hours"
+  },
+  "styles": {
+    "website": "styles/website.css"
+  }
+}

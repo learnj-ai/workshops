@@ -1,0 +1,74 @@
+{
+  "module": "module-05-security-guardrails",
+  "title": "Securing LLM Applications: Guardrails and Safety Patterns",
+  "difficulty": "Advanced",
+  "estimatedTime": "4-5 hours",
+  "version": "1.0.0",
+  "engine": "HonKit",
+  "format": "Markdown",
+  "createdDate": "2024-05-08",
+  "chapters": 12,
+  "totalLines": 5700,
+  "topics": [
+    "Prompt Injection Defense",
+    "PII Masking",
+    "Output Validation",
+    "Access Control",
+    "Security Auditing",
+    "LLM-as-Judge Patterns",
+    "Defense in Depth",
+    "RAG Security"
+  ],
+  "technologies": [
+    "Java 17+",
+    "Spring Boot 3.x",
+    "LangChain4j 1.11.0",
+    "Redis",
+    "OpenAI API",
+    "Maven",
+    "JUnit 5"
+  ],
+  "files": [
+    "README.md",
+    "SUMMARY.md",
+    "book.json",
+    "00-getting-started.md",
+    "01-introduction.md",
+    "02-prompt-injection-guard.md",
+    "03-pii-masking-service.md",
+    "04-output-validator.md",
+    "05-document-access-control.md",
+    "06-security-audit-service.md",
+    "07-llm-config.md",
+    "08-simple-rag-service.md",
+    "09-secure-rag-controller.md",
+    "10-testing-validation.md",
+    "11-conclusion.md",
+    "styles/website.css"
+  ],
+  "prerequisites": {
+    "required": [
+      "Java 17+",
+      "Maven 3.6+",
+      "Docker",
+      "OpenAI API Key",
+      "Java IDE"
+    ],
+    "knowledge": [
+      "Java Fundamentals",
+      "Spring Boot Basics",
+      "LLM Concepts",
+      "Basic Security Awareness"
+    ]
+  },
+  "learningObjectives": [
+    "Understand and defend against prompt injection attacks",
+    "Implement PII detection and masking for compliance",
+    "Validate AI outputs using LLM-as-judge patterns",
+    "Detect hallucinations by grounding responses in source documents",
+    "Build role-based and attribute-based access control systems",
+    "Create comprehensive security audit trails",
+    "Apply defense-in-depth security architecture",
+    "Design fail-safe systems that reject on error"
+  ]
+}
