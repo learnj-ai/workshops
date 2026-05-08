@@ -1,0 +1,19 @@
+{
+  "title": "Vectors and Embeddings: The Physics of AI",
+  "description": "Master the fundamentals of vector embeddings and semantic search by building a Spring Boot application that transforms text into high-dimensional vectors and performs similarity-based retrieval.",
+  "author": "A N M Balzur, Shaaf Syed",
+  "language": "en",
+  "gitbook": "3.x.x",
+  "plugins": [
+    "mermaid-hybrid"
+  ],
+  "pluginsConfig": {},
+  "variables": {
+    "module": "Module 01",
+    "difficulty": "Intermediate",
+    "estimatedTime": "4 hours"
+  },
+  "styles": {
+    "website": "styles/website.css"
+  }
+}
