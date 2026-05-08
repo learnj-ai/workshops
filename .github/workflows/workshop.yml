@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'docs/tutorials/module-01-vector-embeddings/**'
+      - 'llm-springboot/docs/tutorials/module-01-vector-embeddings/**'
   workflow_dispatch:
 
 permissions:
@@ -30,17 +30,17 @@ jobs:
           node-version: 24
 
       - name: Install HonKit and plugins
-        working-directory: docs/tutorials/module-01-vector-embeddings 
+        working-directory: llm-springboot/docs/tutorials/module-01-vector-embeddings 
         run: npm install honkit honkit-plugin-mermaid-hybrid
 
       - name: Build HonKit book
-        working-directory: docs/tutorials/module-01-vector-embeddings
+        working-directory: llm-springboot/docs/tutorials/module-01-vector-embeddings
         run: npx honkit build . _book
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/tutorials/module-01-vector-embeddings
+          path: llm-springboot/docs/tutorials/module-01-vector-embeddings
 
   deploy:
     name: Deploy to GitHub Pages
