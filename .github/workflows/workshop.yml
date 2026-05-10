@@ -21,7 +21,7 @@
       name: Build tutorial book
       runs-on: ubuntu-latest
       env:
-        TUTORIAL_PATH: llm-springboot/docs/tutorials/module-01-vector-embeddings
+        TUTORIAL_PATH: llm-springboot/docs/tutorials
       steps:
         - name: Clone the code
           uses: actions/checkout@v6
@@ -33,9 +33,9 @@
 
         - name: Install HonKit and plugins
           working-directory: ${{ env.TUTORIAL_PATH }}
-          run: npm install honkit honkit-plugin-mermaid-hybrid
+          run: npm install
 
-        - name: Build HonKit book
+  t       - name: Build HonKit book
           working-directory: ${{ env.TUTORIAL_PATH }}
           run: npx honkit build . _book
 
