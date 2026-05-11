@@ -138,7 +138,7 @@ spring:
       api-key: ${OPENAI_API_KEY}
       chat:
         options:
-          model: ${OPENAI_MODEL_NAME:gpt-4}
+          model: ${OPENAI_MODEL_NAME:gpt-4o-mini}
           temperature: 0.7
 ```
 
@@ -146,7 +146,7 @@ spring:
 ```yaml
 dokimos:
   judge:
-    model: ${DOKIMOS_JUDGE_MODEL:gpt-4}
+    model: ${DOKIMOS_JUDGE_MODEL:gpt-4o}  # judge uses the stronger model
     temperature: 0.0
     timeout-seconds: 60
   evaluators:
@@ -195,11 +195,11 @@ management:
 
 ### Customizing Models
 
-You can override the default GPT-4 model:
+You can override the defaults — for example, drop the chat model to a cheaper tier or upgrade the judge:
 
 ```bash
-export OPENAI_MODEL_NAME=gpt-4-turbo
-export DOKIMOS_JUDGE_MODEL=gpt-3.5-turbo  # Use faster/cheaper model for evaluation
+export OPENAI_MODEL_NAME=gpt-4o          # upgrade chat model (default: gpt-4o-mini)
+export DOKIMOS_JUDGE_MODEL=gpt-4o-mini   # downgrade judge if cost matters more than rigor
 ```
 
 ## Sample Evaluation Dataset

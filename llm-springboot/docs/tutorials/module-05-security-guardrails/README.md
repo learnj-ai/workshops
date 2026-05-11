@@ -79,7 +79,7 @@ This tutorial is organized into chapters that build on each other:
 4. **Set environment variables**:
    ```bash
    export OPENAI_API_KEY=your_api_key_here
-   export OPENAI_MODEL_NAME=gpt-4
+   export OPENAI_MODEL_NAME=gpt-4o
    ```
 5. **Build the project**: `mvn clean install`
 6. **Run the application**: `mvn spring-boot:run`

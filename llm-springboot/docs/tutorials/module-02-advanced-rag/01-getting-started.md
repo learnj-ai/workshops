@@ -97,15 +97,15 @@ server:
 langchain4j:
   open-ai:
     api-key: ${OPENAI_API_KEY:demo}
-    model-name: ${OPENAI_MODEL:gpt-4.1-nano}
+    model-name: ${OPENAI_MODEL:gpt-4o-mini}
 ```
 
 **Configuration breakdown:**
 - **`server.port: 8082`** - Runs on port 8082 to avoid conflicts with Module 01 (8080)
 - **`api-key: ${OPENAI_API_KEY:demo}`** - Reads from environment variable, defaults to "demo" (which won't work)
-- **`model-name: ${OPENAI_MODEL:gpt-4.1-nano}`** - Uses GPT-4.1 Nano by default; you can override with `OPENAI_MODEL` env var
+- **`model-name: ${OPENAI_MODEL:gpt-4o-mini}`** - Uses GPT-4o-mini by default; override with `OPENAI_MODEL` env var
 
-> **Why GPT-4.1 Nano?** It's cost-effective for query transformation while maintaining good quality. For production, consider GPT-4 Turbo for better multi-query generation.
+> **Why GPT-4o-mini?** It's the workshop's default across all modules — cheap, fast, and capable enough for query transformation, tool use, and answer generation. For higher-stakes generation (Module 05's primary model, Module 06's evaluation judge), the workshop steps up to `gpt-4o`.
 
 ## Building the Project
 

@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestPropertySource(properties = {
         "evaluation.dataset.path=src/main/resources/data/eval-golden-set.json",
         "spring.ai.openai.api-key=${OPENAI_API_KEY:test-key}",
-        "dokimos.judge.model=gpt-4",
+        "dokimos.judge.model=gpt-4o",
         "dokimos.judge.temperature=0.0"
 })
 @DisplayName("Dokimos Integration Tests")

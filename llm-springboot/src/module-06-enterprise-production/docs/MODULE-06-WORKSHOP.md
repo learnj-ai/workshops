@@ -97,7 +97,7 @@ By the end of this module, you will:
 # Dokimos Evaluation Configuration
 dokimos:
   judge:
-    model: ${DOKIMOS_JUDGE_MODEL:gpt-4}
+    model: ${DOKIMOS_JUDGE_MODEL:gpt-4o}
     temperature: 0.0
   evaluators:
     faithfulness:
@@ -125,7 +125,7 @@ spring:
       api-key: ${OPENAI_API_KEY}
       chat:
         options:
-          model: gpt-4
+          model: gpt-4o-mini
           temperature: 0.0
 ```
 

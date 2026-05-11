@@ -16,7 +16,7 @@ public class DokimosEvaluationConfig {
     @Value("${openai.api.key}")
     private String openAiApiKey;
 
-    @Value("${dokimos.judge.model:gpt-4}")
+    @Value("${dokimos.judge.model:gpt-4o}")
     private String judgeModelName;
 
     @Value("${dokimos.judge.temperature:0.0}")

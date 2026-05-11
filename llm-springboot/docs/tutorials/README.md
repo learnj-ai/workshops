@@ -147,8 +147,8 @@ graph TB
 
 ### API Keys
 You'll need API keys for:
-- **OpenAI**: For GPT models and embeddings (some modules)
-- **Alternative**: Can use Ollama for local LLMs (free, but requires setup)
+- **OpenAI**: required for every chat-model module. The workshop default is `gpt-4o-mini`; Module 05 and the Module 06 evaluation judge step up to `gpt-4o`.
+- **Local LLMs (Ollama, etc.)**: not wired in by default. LangChain4J supports them, but the workshop's bean wiring and chapter examples target OpenAI — swap `OpenAiChatModel` for `OllamaChatModel` if you want to run offline.
 
 ### Optional Tools
 - **PostgreSQL client**: psql, DBeaver, or pgAdmin for database inspection
@@ -167,7 +167,7 @@ This workshop uses modern, production-grade technologies:
 | **LLM Integration** | LangChain4J 1.11 | Java library for LLM applications |
 | **Vector Store** | In-memory (workshop) / pgvector (production reference) | Semantic search and embeddings |
 | **Caching** | Redis | Performance optimization |
-| **LLM Providers** | OpenAI, Ollama | Language models |
+| **LLM Provider** | OpenAI (`gpt-4o-mini` default, `gpt-4o` where stronger judgement is needed) | Language models. Ollama and other LangChain4J providers can be swapped in but the workshop ships OpenAI wiring. |
 | **Observability** | OpenTelemetry, Prometheus | Tracing and metrics |
 | **Evaluation** | Dokimos | RAG quality assessment |
 | **Deployment** | Docker, Kubernetes | Containerization and orchestration |
