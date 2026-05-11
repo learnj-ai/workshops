@@ -548,10 +548,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v2
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
       with:
-        java-version: '17'
+        distribution: 'temurin'
+        java-version: '25'
 
     - name: Run unit tests
       run: mvn test

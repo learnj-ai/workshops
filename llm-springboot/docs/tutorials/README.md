@@ -133,13 +133,13 @@ graph TB
 ## Prerequisites
 
 ### Required Knowledge
-- **Java**: Proficiency with Java 17+ (records, sealed classes, pattern matching helpful)
+- **Java**: Proficiency with Java 25 (records, sealed classes, pattern matching, virtual threads, structured concurrency)
 - **Spring Boot**: Understanding of dependency injection, REST controllers, configuration
 - **REST APIs**: Experience with HTTP, JSON, and API design
 - **Git**: Basic version control operations
 
 ### Required Tools
-- **Java Development Kit (JDK)**: Version 21 or higher
+- **Java Development Kit (JDK)**: Version 25 (workshop code uses Java 25 preview features such as `StructuredTaskScope`; Maven builds with `--enable-preview`)
 - **Maven**: Version 3.8 or higher
 - **Docker & Docker Compose**: For running PostgreSQL, Redis, and containerized services
 - **IDE**: IntelliJ IDEA, VS Code with Java extensions, or Eclipse
@@ -162,9 +162,10 @@ This workshop uses modern, production-grade technologies:
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
-| **Framework** | Spring Boot 3.3+ | Application foundation |
-| **LLM Integration** | LangChain4J | Java library for LLM applications |
-| **Vector Store** | PostgreSQL + pgvector | Semantic search and embeddings |
+| **Java** | Java 25 (preview enabled) | Modern runtime: records, virtual threads, structured concurrency (JEP 505 preview) |
+| **Framework** | Spring Boot 4.0 | Application foundation |
+| **LLM Integration** | LangChain4J 1.11 | Java library for LLM applications |
+| **Vector Store** | In-memory (workshop) / pgvector (production reference) | Semantic search and embeddings |
 | **Caching** | Redis | Performance optimization |
 | **LLM Providers** | OpenAI, Ollama | Language models |
 | **Observability** | OpenTelemetry, Prometheus | Tracing and metrics |
@@ -217,7 +218,7 @@ This tutorial emphasizes:
 
 - **Production-Ready Patterns**: Not just toy examples, but real-world implementations
 - **Best Practices**: Security, testing, monitoring, and error handling from the start
-- **Modern Java**: Leveraging Java 21+ features like records, sealed classes, and structured concurrency
+- **Modern Java**: Leveraging Java 25 features like records, sealed classes, virtual threads, and structured concurrency (preview)
 - **Practical Understanding**: Why things work, not just how to copy-paste code
 - **Progressive Complexity**: Start simple, build toward sophisticated architectures
 

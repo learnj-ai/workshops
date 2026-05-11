@@ -6,7 +6,7 @@ This guide will walk you through setting up and running the **Vectors and Embedd
 
 Before you begin, ensure you have the following installed:
 
-- **Java 17 or higher** - Check with `java -version`
+- **Java 25** - Check with `java -version`. The workshop poms build with `--enable-preview` enabled.
 - **Maven 3.8+** - Check with `mvn -version`
 - **Git** - For cloning the repository
 - **A text editor or IDE** - IntelliJ IDEA, VS Code, or Eclipse recommended
@@ -188,11 +188,11 @@ mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
 
 ### Issue: "BUILD FAILURE - Java version mismatch"
 
-**Solution**: Verify Java 17+ is active:
+**Solution**: Verify Java 25 is active:
 
 ```bash
 java -version
-# Should show: openjdk version "17.x.x" or higher
+# Should show: openjdk version "25" (or "25.x.x")
 ```
 
 Update `JAVA_HOME` if needed:

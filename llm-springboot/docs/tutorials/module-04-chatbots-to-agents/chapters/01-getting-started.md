@@ -44,7 +44,7 @@ Welcome to Module 04! In this chapter, you'll set up your development environmen
 
 Before starting, ensure you have:
 
-- **Java 17 or higher**
+- **Java 25**
   ```bash
   java -version
   ```

@@ -75,8 +75,8 @@ graph TD
 
 ## Technical Stack
 
-- **Java 25** - Latest Java with virtual threads and structured concurrency
-- **Spring Boot 3.x** - Application framework with dependency injection and REST APIs
+- **Java 25** - Latest Java with virtual threads and structured concurrency (JEP 505 preview; builds use `--enable-preview`)
+- **Spring Boot 4.0** - Application framework with dependency injection and REST APIs
 - **LangChain4J** - AI/ML integration library for embeddings and chat models
 - **AllMiniLM-L6-v2** - Lightweight embedding model (384 dimensions) that runs locally
 - **OpenAI GPT** - Chat model for query transformation and answer generation
@@ -101,7 +101,7 @@ This tutorial is organized into the following chapters:
 Before starting this tutorial, you should have:
 
 - **Completed Module 01** (Vectors and Embeddings) or equivalent knowledge
-- **Java 17 or higher** installed on your machine (Java 21+ recommended for structured concurrency features)
+- **Java 25** installed on your machine (required for the `StructuredTaskScope` preview API used in chapter 08)
 - **Understanding of vector embeddings** and semantic search concepts
 - **Familiarity with Spring Boot** and REST API development
 - **OpenAI API key** (or compatible endpoint) for query transformation and answer generation

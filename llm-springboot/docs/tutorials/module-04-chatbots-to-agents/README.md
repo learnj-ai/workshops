@@ -23,7 +23,7 @@ Before starting this tutorial, you should:
 - Complete Modules 01-03 or have equivalent knowledge
 - Understand Spring Boot basics (dependency injection, REST controllers)
 - Be familiar with LLM fundamentals and LangChain4j
-- Have Java 17+ installed
+- Have Java 25 installed
 - Have Docker or access to PostgreSQL and Redis
 
 ## Learning Objectives

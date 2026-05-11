@@ -4,7 +4,7 @@ This quick start guide helps you get the module running in 5 minutes.
 
 ## Prerequisites
 
-- Java 17+
+- Java 25
 - Maven 3.6+
 - Docker and Docker Compose
 - OpenAI API key

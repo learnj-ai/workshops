@@ -357,7 +357,7 @@ Before starting this tutorial, you should have:
 
 You'll need:
 
-- **Java 17 or higher** installed
+- **Java 25** installed
 - **Maven 3.6+** for building the project
 - **Redis server** running locally (or use Docker: `docker run -d -p 6379:6379 redis`)
 - **OpenAI API key** (set as environment variable: `OPENAI_API_KEY`)

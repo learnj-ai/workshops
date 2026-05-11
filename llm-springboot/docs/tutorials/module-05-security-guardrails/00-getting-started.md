@@ -8,7 +8,7 @@ This guide will help you set up and run the Module 05 Security and Guardrails tu
 
 Before starting, ensure you have:
 
-- [ ] Java 17 or higher installed
+- [ ] Java 25 installed
 - [ ] Maven 3.6+ installed
 - [ ] Docker installed (for Redis)
 - [ ] OpenAI API key

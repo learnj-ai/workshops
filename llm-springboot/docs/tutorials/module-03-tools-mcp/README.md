@@ -54,8 +54,8 @@ graph TD
 
 ## Technical Stack
 
-- **Java 17** - Modern Java with records, sealed classes, and pattern matching
-- **Spring Boot 3.x** - Application framework with REST APIs and dependency injection
+- **Java 25** - Modern Java with records, sealed classes, virtual threads, and pattern matching
+- **Spring Boot 4.0** - Application framework with REST APIs and dependency injection
 - **Spring Data JDBC** - Database access with JdbcTemplate
 - **PostgreSQL** - Production-grade relational database for customer data
 - **LangChain4J** - AI integration framework with tool orchestration
@@ -80,7 +80,7 @@ This tutorial is organized into the following chapters:
 
 Before starting this tutorial, you should have:
 
-- **Java 17 or higher** installed on your machine
+- **Java 25** installed on your machine
 - **PostgreSQL 12+** running locally or via Docker
 - **OpenAI API key** for accessing GPT-4 (or compatible models)
 - **Basic understanding of Spring Boot** (controllers, services, dependency injection)

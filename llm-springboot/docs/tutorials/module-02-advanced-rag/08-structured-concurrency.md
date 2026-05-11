@@ -1,6 +1,6 @@
 # Structured Concurrency: Modern Java Parallelism
 
-When you need to run multiple searches in parallel—vector, keyword, and hybrid—how do you ensure they all complete successfully, cancel if one fails, and clean up resources properly? Traditional Java concurrency with `ExecutorService` and `Future` is powerful but error-prone. **Structured concurrency**, introduced in Java 21+, provides a safer, more maintainable approach. This chapter explores how `RAGController` uses `StructuredTaskScope` to run parallel searches with guaranteed cleanup and cancellation semantics.
+When you need to run multiple searches in parallel—vector, keyword, and hybrid—how do you ensure they all complete successfully, cancel if one fails, and clean up resources properly? Traditional Java concurrency with `ExecutorService` and `Future` is powerful but error-prone. **Structured concurrency**, previewed since Java 21 and refined as JEP 505 in **Java 25**, provides a safer, more maintainable approach. This chapter uses the Java 25 preview API (`StructuredTaskScope.open(...)`), which requires `--enable-preview` at both compile and runtime (the workshop pom enables this automatically). It explores how `RAGController` uses `StructuredTaskScope` to run parallel searches with guaranteed cleanup and cancellation semantics.
 
 ## The Problem with Traditional Concurrency
 
@@ -279,7 +279,7 @@ Total:          250ms (max of the three)
 
 ### Resource Usage
 
-- **Threads**: Uses virtual threads (if available in Java 21+) or platform threads
+- **Threads**: Uses virtual threads (Java 21+, standard in Java 25)
 - **Memory**: Minimal overhead per task
 - **CPU**: Efficient—only as many threads as needed
 
@@ -375,7 +375,7 @@ try (var scope = StructuredTaskScope.open(Joiner.anySuccessfulResultOrThrow())) 
 
 ## Virtual Threads and Structured Concurrency
 
-Java 21+ includes **virtual threads** (Project Loom), which are lightweight threads managed by the JVM. Structured concurrency works seamlessly with virtual threads:
+Since Java 21, **virtual threads** (Project Loom) are part of standard Java. Java 25's structured concurrency works seamlessly with them:
 
 ```java
 try (var scope = StructuredTaskScope.open(Joiner.allSuccessfulOrThrow(),
@@ -402,7 +402,7 @@ try (var scope = StructuredTaskScope.open(Joiner.allSuccessfulOrThrow(),
 - **`allSuccessfulOrThrow()`** joiner ensures all tasks succeed or the entire operation fails
 - **Automatic cancellation** prevents wasted work if one task fails
 - **Try-with-resources** guarantees scope cleanup even on exceptions
-- **Virtual threads** (Java 21+) make structured concurrency scale to millions of tasks
+- **Virtual threads** (standard since Java 21) make structured concurrency scale to millions of tasks
 - **Use for short-lived parallel operations** where all results are needed
 
 ---

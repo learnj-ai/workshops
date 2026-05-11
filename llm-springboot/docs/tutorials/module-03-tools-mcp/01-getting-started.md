@@ -6,7 +6,7 @@ This guide walks you through setting up and running the **Tools and MCP** module
 
 Before you begin, ensure you have the following installed:
 
-- **Java 17 or higher** - Check with `java -version`
+- **Java 25** - Check with `java -version`
 - **Maven 3.8+** - Check with `mvn -version`
 - **PostgreSQL 12+** - Database for customer and support ticket data
 - **Docker** (optional) - For running PostgreSQL in a container

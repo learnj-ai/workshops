@@ -36,11 +36,12 @@ module-02-advanced-rag/
 
 Before proceeding, verify you have:
 
-1. **Java 17 or higher** (Java 21+ recommended for structured concurrency):
+1. **Java 25** (required for structured concurrency preview API used in this module):
    ```bash
    java -version
-   # Should show: java version "17" or higher
+   # Should show: openjdk version "25" (or "25.x.x")
    ```
+   The pom builds with `--enable-preview` because `StructuredTaskScope.open(...)` is a Java 25 preview API (JEP 505).
 
 2. **Maven 3.6+**:
    ```bash
