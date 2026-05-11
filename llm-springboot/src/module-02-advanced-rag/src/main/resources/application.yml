@@ -8,4 +8,4 @@ server:
 langchain4j:
   open-ai:
     api-key: ${OPENAI_API_KEY:demo}
-    model-name: ${OPENAI_MODEL:gpt-4.1-nano}
+    model-name: ${OPENAI_MODEL:gpt-4o-mini}

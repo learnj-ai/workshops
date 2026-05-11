@@ -194,7 +194,7 @@ public String callLLM(String prompt, int maxTokens) {
     Span currentSpan = Span.current();
 
     // Add custom attributes
-    currentSpan.setAttribute("llm.model", "gpt-4");
+    currentSpan.setAttribute("llm.model", "gpt-4o-mini");
     currentSpan.setAttribute("llm.prompt_length", prompt.length());
     currentSpan.setAttribute("llm.max_tokens", maxTokens);
 
@@ -327,7 +327,7 @@ span.setAttribute("data", complexObject.toString());
 span.setAttribute("query.text", query);
 span.setAttribute("query.length", query.length());
 span.setAttribute("retrieval.results_count", results.size());
-span.setAttribute("llm.model", "gpt-4");
+span.setAttribute("llm.model", "gpt-4o-mini");
 span.setAttribute("llm.temperature", 0.7);
 ```
 

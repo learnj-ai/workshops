@@ -346,10 +346,10 @@ graph TD
     I --> L[Total: 4 extra LLM calls per RAG request]
 ```
 
-**Cost breakdown (using GPT-4 Turbo):**
+**Cost breakdown (using GPT-4o-mini, the workshop default; *prices as of 2026-05*):**
 - Multi-query prompt: ~50 tokens input, ~100 tokens output
 - HyDE prompt: ~30 tokens input, ~200 tokens output
-- **Total per request**: ~380 extra tokens ≈ $0.003 at GPT-4 Turbo pricing
+- **Total per request**: ~380 extra tokens ≈ $0.00012 at GPT-4o-mini pricing ($0.15/M input + $0.60/M output)
 
 **Latency breakdown:**
 - Multi-query LLM call: ~600ms
@@ -360,7 +360,7 @@ graph TD
 1. **Cache transformations**: Same question → same variants (cache for 1 hour)
 2. **Parallel LLM calls**: Run multi-query and HyDE in parallel
 3. **Selective transformation**: Only transform questions >5 words
-4. **Use cheaper models**: GPT-3.5 Turbo for multi-query, GPT-4 for HyDE
+4. **Tier the models**: GPT-4o-mini handles multi-query expansion fine; upgrade to GPT-4o only for HyDE if recall isn't where you want it
 
 ## Practice Exercises
 

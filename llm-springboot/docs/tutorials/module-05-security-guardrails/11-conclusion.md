@@ -67,10 +67,10 @@ graph TB
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
-| Framework | Spring Boot 3.x | REST API and dependency injection |
+| Framework | Spring Boot 4.0 | REST API and dependency injection |
 | LLM Integration | LangChain4j | Chat models and AI orchestration |
-| Primary Model | GPT-4 | High-quality response generation |
-| Validator Model | GPT-3.5-Turbo | Fast, deterministic validation |
+| Primary Model | GPT-4o | High-quality response generation |
+| Validator Model | GPT-4o-mini | Fast, deterministic validation (~10× cheaper than primary) |
 | Audit Store | Redis | High-performance event logging |
 | Testing | JUnit 5 | Unit and integration tests |
 

@@ -24,8 +24,8 @@ By completing this tutorial, you will:
 
 ## Technologies Used
 
-- Java 17+
-- Spring Boot 3.x
+- Java 25
+- Spring Boot 4.0
 - LangChain4j 1.11.0
 - Redis (for audit logging)
 - OpenAI API (dual-model setup: primary + validator)
@@ -42,7 +42,7 @@ By completing this tutorial, you will:
 
 ### Development Environment
 
-- **Java 17 or higher** installed
+- **Java 25** installed
 - **Maven 3.6+** for building the project
 - **Redis server** running locally (or Docker: `docker run -d -p 6379:6379 redis`)
 - **OpenAI API key** (set as environment variable: `OPENAI_API_KEY`)
@@ -79,7 +79,7 @@ This tutorial is organized into chapters that build on each other:
 4. **Set environment variables**:
    ```bash
    export OPENAI_API_KEY=your_api_key_here
-   export OPENAI_MODEL_NAME=gpt-4
+   export OPENAI_MODEL_NAME=gpt-4o
    ```
 5. **Build the project**: `mvn clean install`
 6. **Run the application**: `mvn spring-boot:run`

@@ -4,7 +4,7 @@ This quick start guide helps you get the module running in 5 minutes.
 
 ## Prerequisites
 
-- Java 17+
+- Java 25
 - Maven 3.6+
 - Docker and Docker Compose
 - OpenAI API key
@@ -156,8 +156,9 @@ ConversationMemoryService (Redis)
 ### Port Already in Use
 
 ```bash
-# Change port in application.properties
-server.port=8085
+# Change port in application.yml
+# server:
+#   port: 8085
 ```
 
 ### Database Connection Failed
@@ -227,7 +228,7 @@ docker-compose down -v
 
 - Full Tutorial: [README.md](README.md)
 - API Reference: `src/main/java/com/techcorp/assistant/module04/controller/AgentController.java`
-- Configuration: `src/main/resources/application.properties`
+- Configuration: `src/main/resources/application.yml`
 - Tests: `src/test/java/`
 
 ## Support

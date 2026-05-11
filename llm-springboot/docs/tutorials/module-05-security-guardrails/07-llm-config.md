@@ -13,8 +13,8 @@ The `LLMConfig` component configures two separate LLM instances: a primary model
 **Independence**: If the primary model is compromised or manipulated, the validator provides an independent check.
 
 **Optimization**: Different tasks benefit from different model configurations:
-- **Primary Model (GPT-4)**: Creative, high-quality generation (higher temperature)
-- **Validator Model (GPT-3.5)**: Fast, deterministic classification (zero temperature)
+- **Primary Model (GPT-4o)**: Creative, high-quality generation (higher temperature)
+- **Validator Model (GPT-4o-mini)**: Fast, deterministic classification (zero temperature)
 
 ## Implementation
 
@@ -76,22 +76,22 @@ openai:
   api:
     key: ${OPENAI_API_KEY}
   model:
-    name: ${OPENAI_MODEL_NAME:gpt-4}
+    name: ${OPENAI_MODEL_NAME:gpt-4o}
   validator:
     model:
-      name: gpt-3.5-turbo
+      name: ${OPENAI_VALIDATOR_MODEL:gpt-4o-mini}
       temperature: 0.0
 ```
 
 ### Model Comparison
 
-| Aspect | Primary Model (GPT-4) | Validator Model (GPT-3.5-Turbo) |
+| Aspect | Primary Model (GPT-4o) | Validator Model (GPT-4o-mini) |
 |--------|---------------------|--------------------------------|
 | **Purpose** | Generate responses | Validate safety and grounding |
 | **Temperature** | 0.7 (creative) | 0.0 (deterministic) |
 | **Timeout** | 60 seconds | 30 seconds |
 | **Logging** | Enabled | Disabled (performance) |
-| **Cost** | Higher | Lower |
+| **Cost** | Higher | Lower (~10× cheaper input, ~16× cheaper output) |
 | **Speed** | Slower | Faster |
 
 ## Architecture
@@ -100,12 +100,12 @@ openai:
 
 ```mermaid
 graph TB
-    Query[User Query] --> Primary[Primary Model<br/>GPT-4<br/>temp=0.7]
+    Query[User Query] --> Primary[Primary Model<br/>GPT-4o<br/>temp=0.7]
 
     Primary --> Response[AI Response]
 
-    Response --> Safety[Safety Validator<br/>GPT-3.5-Turbo<br/>temp=0.0]
-    Response --> Hallucination[Hallucination Detector<br/>GPT-3.5-Turbo<br/>temp=0.0]
+    Response --> Safety[Safety Validator<br/>GPT-4o-mini<br/>temp=0.0]
+    Response --> Hallucination[Hallucination Detector<br/>GPT-4o-mini<br/>temp=0.0]
 
     Safety --> Decision{Both Pass?}
     Hallucination --> Decision
@@ -148,13 +148,13 @@ Submit the same query multiple times. How does the response vary?
 
 **Task 2: Swap Model Roles**
 
-Try using GPT-4 as the validator:
+Try using `gpt-4o` (the primary model) as the validator:
 
 ```yaml
 openai:
   validator:
     model:
-      name: gpt-4
+      name: gpt-4o
       temperature: 0.0
 ```
 
@@ -162,13 +162,13 @@ Does validation improve? What's the cost impact?
 
 **Task 3: Add Model Fallback**
 
-Implement fallback to GPT-3.5 if GPT-4 fails:
+Implement fallback to `gpt-4o-mini` if `gpt-4o` fails:
 
 ```java
 @Bean
 public ChatModel chatModelWithFallback() {
-    ChatModel primary = createGPT4Model();
-    ChatModel fallback = createGPT35Model();
+    ChatModel primary = createGpt4oModel();
+    ChatModel fallback = createGpt4oMiniModel();
 
     return new FallbackChatModel(primary, fallback);
 }
@@ -201,7 +201,7 @@ Use multiple validator models for consensus:
 @Bean
 public ChatModel safetyValidator1() {
     return OpenAiChatModel.builder()
-        .modelName("gpt-3.5-turbo")
+        .modelName("gpt-4o-mini")
         .temperature(0.0)
         .build();
 }
@@ -209,7 +209,7 @@ public ChatModel safetyValidator1() {
 @Bean
 public ChatModel safetyValidator2() {
     return OpenAiChatModel.builder()
-        .modelName("gpt-4")
+        .modelName("gpt-4o")
         .temperature(0.0)
         .build();
 }
@@ -237,7 +237,7 @@ public ChatModel validatorModel() {
 
 1. **Dual models provide security independence**: Validator can't be compromised by primary
 2. **Different tasks need different configurations**: Creative vs. deterministic
-3. **Cost-performance tradeoffs**: GPT-4 for quality, GPT-3.5 for speed
+3. **Cost-performance tradeoffs**: GPT-4o for quality, GPT-4o-mini for speed and bulk validation
 4. **Separation prevents self-approval**: Primary can't validate its own output
 
 ---

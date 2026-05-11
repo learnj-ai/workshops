@@ -253,11 +253,11 @@ sequenceDiagram
 
 | Technology | Version | Purpose |
 |-----------|---------|---------|
-| **Java** | 17+ | Primary programming language with modern features |
-| **Spring Boot** | 3.x | Application framework for dependency injection and REST APIs |
+| **Java** | 25 (preview enabled) | Primary programming language with modern features |
+| **Spring Boot** | 4.0 | Application framework for dependency injection and REST APIs |
 | **LangChain4j** | 1.11.0 | AI integration framework for chat models and document processing |
 | **Redis** | Latest | Distributed cache for security audit logs |
-| **OpenAI API** | GPT-4 / GPT-3.5 | Dual-model setup: primary LLM + validator LLM |
+| **OpenAI API** | GPT-4o / GPT-4o-mini | Dual-model setup: primary LLM + validator LLM |
 
 ### Key Dependencies
 
@@ -357,7 +357,7 @@ Before starting this tutorial, you should have:
 
 You'll need:
 
-- **Java 17 or higher** installed
+- **Java 25** installed
 - **Maven 3.6+** for building the project
 - **Redis server** running locally (or use Docker: `docker run -d -p 6379:6379 redis`)
 - **OpenAI API key** (set as environment variable: `OPENAI_API_KEY`)
@@ -388,7 +388,7 @@ You'll need:
 3. **Set environment variables**:
    ```bash
    export OPENAI_API_KEY=your_api_key_here
-   export OPENAI_MODEL_NAME=gpt-4
+   export OPENAI_MODEL_NAME=gpt-4o
    ```
 
 4. **Build the project**:

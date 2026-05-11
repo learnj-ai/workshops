@@ -156,7 +156,7 @@ spring:
 ```yaml
 dokimos:
   judge:
-    model: gpt-3.5-turbo  # Faster than gpt-4
+    model: gpt-4o-mini  # Faster/cheaper than gpt-4o; acceptable for many judges
 ```
 
 4. **Run in parallel** (if supported):
@@ -208,7 +208,7 @@ public JudgeLMResponse judge(String prompt) {
 
 4. **Use tier limits wisely:**
 - Free tier: 3 requests/minute
-- Pay-as-you-go: 3,500 requests/minute (gpt-4)
+- Pay-as-you-go: rate limits vary by model and tier — see [OpenAI rate limits](https://platform.openai.com/docs/guides/rate-limits)
 - Upgrade if running large evaluations
 
 ---

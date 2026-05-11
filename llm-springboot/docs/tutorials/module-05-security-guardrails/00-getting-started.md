@@ -8,7 +8,7 @@ This guide will help you set up and run the Module 05 Security and Guardrails tu
 
 Before starting, ensure you have:
 
-- [ ] Java 17 or higher installed
+- [ ] Java 25 installed
 - [ ] Maven 3.6+ installed
 - [ ] Docker installed (for Redis)
 - [ ] OpenAI API key
@@ -52,14 +52,14 @@ On macOS/Linux:
 
 ```bash
 export OPENAI_API_KEY=your_api_key_here
-export OPENAI_MODEL_NAME=gpt-4
+export OPENAI_MODEL_NAME=gpt-4o
 ```
 
 On Windows (PowerShell):
 
 ```powershell
 $env:OPENAI_API_KEY="your_api_key_here"
-$env:OPENAI_MODEL_NAME="gpt-4"
+$env:OPENAI_MODEL_NAME="gpt-4o"
 ```
 
 ### Step 3: Navigate to Module Directory

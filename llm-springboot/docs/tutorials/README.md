@@ -133,13 +133,13 @@ graph TB
 ## Prerequisites
 
 ### Required Knowledge
-- **Java**: Proficiency with Java 17+ (records, sealed classes, pattern matching helpful)
+- **Java**: Proficiency with Java 25 (records, sealed classes, pattern matching, virtual threads, structured concurrency)
 - **Spring Boot**: Understanding of dependency injection, REST controllers, configuration
 - **REST APIs**: Experience with HTTP, JSON, and API design
 - **Git**: Basic version control operations
 
 ### Required Tools
-- **Java Development Kit (JDK)**: Version 21 or higher
+- **Java Development Kit (JDK)**: Version 25 (workshop code uses Java 25 preview features such as `StructuredTaskScope`; Maven builds with `--enable-preview`)
 - **Maven**: Version 3.8 or higher
 - **Docker & Docker Compose**: For running PostgreSQL, Redis, and containerized services
 - **IDE**: IntelliJ IDEA, VS Code with Java extensions, or Eclipse
@@ -147,8 +147,8 @@ graph TB
 
 ### API Keys
 You'll need API keys for:
-- **OpenAI**: For GPT models and embeddings (some modules)
-- **Alternative**: Can use Ollama for local LLMs (free, but requires setup)
+- **OpenAI**: required for every chat-model module. The workshop default is `gpt-4o-mini`; Module 05 and the Module 06 evaluation judge step up to `gpt-4o`.
+- **Local LLMs (Ollama, etc.)**: not wired in by default. LangChain4J supports them, but the workshop's bean wiring and chapter examples target OpenAI — swap `OpenAiChatModel` for `OllamaChatModel` if you want to run offline.
 
 ### Optional Tools
 - **PostgreSQL client**: psql, DBeaver, or pgAdmin for database inspection
@@ -162,11 +162,12 @@ This workshop uses modern, production-grade technologies:
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
-| **Framework** | Spring Boot 3.3+ | Application foundation |
-| **LLM Integration** | LangChain4J | Java library for LLM applications |
-| **Vector Store** | PostgreSQL + pgvector | Semantic search and embeddings |
+| **Java** | Java 25 (preview enabled) | Modern runtime: records, virtual threads, structured concurrency (JEP 505 preview) |
+| **Framework** | Spring Boot 4.0 | Application foundation |
+| **LLM Integration** | LangChain4J 1.11 | Java library for LLM applications |
+| **Vector Store** | In-memory (workshop) / pgvector (production reference) | Semantic search and embeddings |
 | **Caching** | Redis | Performance optimization |
-| **LLM Providers** | OpenAI, Ollama | Language models |
+| **LLM Provider** | OpenAI (`gpt-4o-mini` default, `gpt-4o` where stronger judgement is needed) | Language models. Ollama and other LangChain4J providers can be swapped in but the workshop ships OpenAI wiring. |
 | **Observability** | OpenTelemetry, Prometheus | Tracing and metrics |
 | **Evaluation** | Dokimos | RAG quality assessment |
 | **Deployment** | Docker, Kubernetes | Containerization and orchestration |
@@ -217,7 +218,7 @@ This tutorial emphasizes:
 
 - **Production-Ready Patterns**: Not just toy examples, but real-world implementations
 - **Best Practices**: Security, testing, monitoring, and error handling from the start
-- **Modern Java**: Leveraging Java 21+ features like records, sealed classes, and structured concurrency
+- **Modern Java**: Leveraging Java 25 features like records, sealed classes, virtual threads, and structured concurrency (preview)
 - **Practical Understanding**: Why things work, not just how to copy-paste code
 - **Progressive Complexity**: Start simple, build toward sophisticated architectures
 

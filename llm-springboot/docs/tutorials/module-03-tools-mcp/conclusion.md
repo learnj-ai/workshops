@@ -47,7 +47,7 @@ You understand:
 - Environment-specific configuration for development and production
 
 **Real-world applications**:
-- Multi-model architectures (route complex queries to GPT-4, simple ones to GPT-4-mini)
+- Multi-model architectures (route complex queries to GPT-4o, simple ones to GPT-4o-mini)
 - Provider-agnostic tool libraries that work with any MCP-compliant LLM
 - Cost optimization through model selection and caching
 
@@ -372,7 +372,7 @@ public class ToolMetrics {
 Reduce OpenAI API expenses:
 
 - **Prompt caching** - Cache identical requests
-- **Model selection** - Use GPT-4-mini for simple queries
+- **Model selection** - Use GPT-4o-mini for simple queries
 - **Batch processing** - Process multiple requests together
 - **Smart routing** - Use cheaper models first, escalate if needed
 

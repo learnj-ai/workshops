@@ -53,7 +53,7 @@ graph TD
 The module includes a production-ready Dockerfile:
 
 ```dockerfile
-FROM registry.access.redhat.com/ubi9/openjdk-21:latest
+FROM registry.access.redhat.com/ubi9/openjdk-25:latest
 
 # Set working directory
 WORKDIR /app
@@ -64,13 +64,13 @@ COPY target/*.jar app.jar
 # Expose application port
 EXPOSE 8086
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Run the application (--enable-preview required for Java 25 preview APIs used in the workshop)
+ENTRYPOINT ["java", "--enable-preview", "-jar", "app.jar"]
 ```
 
 **Key decisions**:
 - **Base image**: Red Hat UBI (Universal Base Image) for security and enterprise support
-- **OpenJDK 21**: Uses Java 21 (compatible with Java 25 code)
+- **OpenJDK 25**: Matches the Java version the workshop compiles with; `--enable-preview` is required because Module 02 uses the JEP 505 `StructuredTaskScope` preview API
 - **Single JAR**: Spring Boot uber JAR includes all dependencies
 - **Port 8086**: Matches application.yml configuration
 

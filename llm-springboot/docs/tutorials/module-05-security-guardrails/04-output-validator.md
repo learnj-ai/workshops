@@ -158,10 +158,10 @@ The system uses two separate LLM instances:
 
 ```mermaid
 graph LR
-    Input[User Query] --> Primary[Primary LLM<br/>GPT-4]
+    Input[User Query] --> Primary[Primary LLM<br/>GPT-4o]
     Primary --> Response[AI Response]
 
-    Response --> Validator[Validator LLM<br/>GPT-3.5-Turbo]
+    Response --> Validator[Validator LLM<br/>GPT-4o-mini]
     Sources[Source Docs] --> Validator
 
     Validator --> SafetyCheck{Safety Check}
@@ -185,7 +185,7 @@ graph LR
 
 **Optimization**: Validator uses different parameters:
 - Lower temperature (0.0) for consistent classification
-- Faster/cheaper model (GPT-3.5 vs GPT-4)
+- Faster/cheaper model (GPT-4o-mini vs GPT-4o)
 - Shorter context window (validation is simpler than generation)
 
 **Separation of Concerns**: Generation and validation are different tasks
@@ -248,10 +248,10 @@ openai:
   api:
     key: ${OPENAI_API_KEY}
   model:
-    name: ${OPENAI_MODEL_NAME:gpt-4}  # Primary model
+    name: ${OPENAI_MODEL_NAME:gpt-4o}  # Primary model
   validator:
     model:
-      name: gpt-3.5-turbo  # Validator model
+      name: ${OPENAI_VALIDATOR_MODEL:gpt-4o-mini}  # Validator model (cheap + fast)
       temperature: 0.0     # Deterministic responses
 ```
 
@@ -469,7 +469,7 @@ private static final String HEALTHCARE_VALIDATION_PROMPT = """
 - Consider caching validation results
 
 **Cost**: Validation adds API costs
-- Use cheaper models (GPT-3.5 vs GPT-4)
+- Use cheaper models (GPT-4o-mini vs GPT-4o)
 - Batch validate when possible
 - Cache results for identical outputs
 

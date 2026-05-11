@@ -23,7 +23,7 @@ Before starting this tutorial, you should:
 - Complete Modules 01-03 or have equivalent knowledge
 - Understand Spring Boot basics (dependency injection, REST controllers)
 - Be familiar with LLM fundamentals and LangChain4j
-- Have Java 17+ installed
+- Have Java 25 installed
 - Have Docker or access to PostgreSQL and Redis
 
 ## Learning Objectives
@@ -124,9 +124,9 @@ If you encounter issues or have questions:
 
 ## Technical Stack
 
-- **Spring Boot 3.x** - Application framework
+- **Spring Boot 4.0** - Application framework
 - **LangChain4j** - LLM orchestration and agent framework
-- **OpenAI GPT-4** - Large language model
+- **OpenAI GPT-4o-mini** - Default chat model (workshop standard); upgrade to GPT-4o per `OPENAI_MODEL_NAME`
 - **PostgreSQL** - Persistent data storage
 - **Redis** - Conversation memory cache
 - **Maven** - Build and dependency management

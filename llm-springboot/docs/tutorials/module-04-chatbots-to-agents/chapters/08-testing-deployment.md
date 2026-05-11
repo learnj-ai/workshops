@@ -526,7 +526,7 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: workshop_db
+      POSTGRES_DB: workshop_module04
       POSTGRES_USER: workshop
       POSTGRES_PASSWORD: workshop123
     ports:
@@ -546,7 +546,7 @@ services:
     ports:
       - "8084:8084"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/workshop_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/workshop_module04
       SPRING_DATASOURCE_USERNAME: workshop
       SPRING_DATASOURCE_PASSWORD: workshop123
       SPRING_DATA_REDIS_HOST: redis

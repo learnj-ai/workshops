@@ -43,8 +43,8 @@ graph TD
 
 ## Technical Stack
 
-- **Java 17** - Modern Java with records, pattern matching, and improved syntax
-- **Spring Boot 3.x** - Application framework with dependency injection and REST APIs
+- **Java 25** - Modern Java with records, pattern matching, virtual threads, and improved syntax
+- **Spring Boot 4.0** - Application framework with dependency injection and REST APIs
 - **LangChain4J** - AI/ML integration library for embeddings and document processing
 - **AllMiniLM-L6-v2** - Lightweight embedding model (384 dimensions) that runs locally
 - **Maven** - Build and dependency management
@@ -67,7 +67,7 @@ This tutorial is organized into the following chapters:
 
 Before starting this tutorial, you should have:
 
-- **Java 17 or higher** installed on your machine
+- **Java 25** installed on your machine (workshop poms build with `--enable-preview`)
 - **Basic understanding of Spring Boot** (dependency injection, REST controllers)
 - **Familiarity with REST APIs** (HTTP methods, JSON, request/response)
 - **Maven knowledge** (build lifecycle, dependencies)

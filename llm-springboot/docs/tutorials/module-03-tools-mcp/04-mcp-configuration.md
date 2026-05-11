@@ -130,11 +130,12 @@ openai.api.key=${OPENAI_API_KEY:your-key-here}
 Specifies which OpenAI model to use:
 - **gpt-4o-mini** (default) - Fast, cost-effective, good for most tasks
 - **gpt-4o** - More capable, better reasoning, higher cost
-- **gpt-3.5-turbo** - Legacy model, faster but less capable
+- **gpt-3.5-turbo** - Legacy model; OpenAI has been migrating customers off it — prefer `gpt-4o-mini` for new code
 
-**Cost considerations**:
-| Model | Input (per 1M tokens) | Output (per 1M tokens) | Tool Support |
-|-------|----------------------|------------------------|--------------|
+**Cost considerations** (USD per 1M tokens, *as of 2026-05*; check [OpenAI pricing](https://openai.com/api/pricing/) for current rates):
+
+| Model | Input | Output | Tool Support |
+|-------|-------|--------|--------------|
 | gpt-4o-mini | $0.15 | $0.60 | Excellent |
 | gpt-4o | $2.50 | $10.00 | Excellent |
 | gpt-3.5-turbo | $0.50 | $1.50 | Good |
