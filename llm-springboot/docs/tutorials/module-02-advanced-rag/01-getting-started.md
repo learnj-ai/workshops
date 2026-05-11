@@ -101,7 +101,7 @@ langchain4j:
 ```
 
 **Configuration breakdown:**
-- **`server.port: 8082`** - Runs on port 8082 to avoid conflicts with Module 01 (8081)
+- **`server.port: 8082`** - Runs on port 8082 to avoid conflicts with Module 01 (8080)
 - **`api-key: ${OPENAI_API_KEY:demo}`** - Reads from environment variable, defaults to "demo" (which won't work)
 - **`model-name: ${OPENAI_MODEL:gpt-4.1-nano}`** - Uses GPT-4.1 Nano by default; you can override with `OPENAI_MODEL` env var
 

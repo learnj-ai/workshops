@@ -651,7 +651,7 @@ public class DataSourceConfig {
     @Bean
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:postgresql://localhost:5432/workshop_db");
+        config.setJdbcUrl("jdbc:postgresql://localhost:5432/workshop_module04");
         config.setUsername("workshop");
         config.setPassword("workshop123");
 

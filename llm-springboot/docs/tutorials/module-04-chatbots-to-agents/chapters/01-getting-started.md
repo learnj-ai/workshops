@@ -72,12 +72,14 @@ Module 04 uses PostgreSQL to store customer and support ticket data that agents 
 ```bash
 docker run -d \
   --name workshop-postgres \
-  -e POSTGRES_DB=workshop_db \
+  -e POSTGRES_DB=workshop_module04 \
   -e POSTGRES_USER=workshop \
   -e POSTGRES_PASSWORD=workshop123 \
   -p 5432:5432 \
   postgres:15-alpine
 ```
+
+> **Note:** Each workshop module uses its own database (`workshop_module03`, `workshop_module04`, …) to avoid seed-data conflicts. If you already have a `workshop-postgres` container running for another module, create this database inside it instead: `docker exec workshop-postgres createdb -U workshop workshop_module04`.
 
 **Verify PostgreSQL is running:**
 ```bash
@@ -145,7 +147,7 @@ INSERT INTO support_tickets (ticket_id, customer_id, subject, status) VALUES
 
 **Execute the SQL:**
 ```bash
-docker exec -i workshop-postgres psql -U workshop -d workshop_db < init-db.sql
+docker exec -i workshop-postgres psql -U workshop -d workshop_module04 < init-db.sql
 ```
 
 ## Step 2: Configure the Module
@@ -159,7 +161,7 @@ Create or update your `.env` file in the project root:
 export OPENAI_API_KEY="sk-your-api-key-here"
 
 # Database Configuration
-export DB_URL="jdbc:postgresql://localhost:5432/workshop_db"
+export DB_URL="jdbc:postgresql://localhost:5432/workshop_module04"
 export DB_USER="workshop"
 export DB_PASS="workshop123"
 
@@ -175,37 +177,44 @@ source .env
 
 ### Verify Configuration
 
-Check `src/main/resources/application.properties`:
+Check `src/main/resources/application.yml`:
 
-```properties
-# Application
-spring.application.name=module-04-chatbots-to-agents
-server.port=8084
+```yaml
+spring:
+  application:
+    name: module-04-chatbots-to-agents
+  datasource:
+    url: jdbc:postgresql://localhost:5432/workshop_module04
+    username: workshop
+    password: workshop123
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 60000
 
-# PostgreSQL Database (for tools)
-spring.datasource.url=jdbc:postgresql://localhost:5432/workshop_db
-spring.datasource.username=workshop
-spring.datasource.password=workshop123
-spring.datasource.driver-class-name=org.postgresql.Driver
+server:
+  port: 8084
 
-# Redis Configuration
-spring.data.redis.host=localhost
-spring.data.redis.port=6379
-spring.data.redis.timeout=60000
+openai:
+  api:
+    key: ${OPENAI_API_KEY:your-api-key-here}
+  model:
+    name: gpt-4o-mini
+  temperature: 0.7
 
-# OpenAI Configuration
-openai.api.key=${OPENAI_API_KEY:your-api-key-here}
-openai.model.name=gpt-4o-mini
-openai.temperature=0.7
+agent:
+  react:
+    max-iterations: 5
+  memory:
+    max-messages: 20
+    ttl-hours: 24
 
-# Agent Configuration
-agent.react.max-iterations=5
-agent.memory.max-messages=20
-agent.memory.ttl-hours=24
-
-# Logging
-logging.level.com.techcorp.assistant=DEBUG
-logging.level.dev.langchain4j=DEBUG
+logging:
+  level:
+    com.techcorp.assistant: DEBUG
+    dev.langchain4j: DEBUG
 ```
 
 ## Step 3: Build and Run the Module
