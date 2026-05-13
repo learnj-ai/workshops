@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL for Module 03 (Tools) and Module 04 (Agents).
   # Each module gets its own database; see docker/postgres/init-multiple-dbs.sh.

@@ -44,6 +44,7 @@
 * [Tool Orchestrator: The Intelligence Layer](module-03-tools-mcp/05-tool-orchestrator.md)
 * [REST Controller: The API Gateway](module-03-tools-mcp/06-rest-controller.md)
 * [Testing Tools and Orchestration](module-03-tools-mcp/07-testing.md)
+* [Real MCP: Connecting to an External Tool Server](module-03-tools-mcp/09-real-mcp.md)
 * [Conclusion](module-03-tools-mcp/conclusion.md)
 
 ---
@@ -102,4 +103,5 @@
 * [Metrics and Monitoring: Observability in Production](module-06-enterprise-production/06-metrics-monitoring.md)
 * [Token Optimization: Reducing Costs and Latency](module-06-enterprise-production/07-token-optimization.md)
 * [Kubernetes Deployment: Scaling to Production](module-06-enterprise-production/08-kubernetes-deployment.md)
+* [Appendix: Migrating to pgvector](module-06-enterprise-production/09-pgvector-migration.md)
 * [Conclusion](module-06-enterprise-production/conclusion.md)
