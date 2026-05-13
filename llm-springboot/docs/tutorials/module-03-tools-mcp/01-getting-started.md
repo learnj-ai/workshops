@@ -380,7 +380,7 @@ Now that you have the system running, try these exercises:
 ## Key Takeaways
 
 - **Tools extend LLMs** beyond text generation by connecting to real data sources
-- **The Model Context Protocol** standardizes how tools are registered and invoked
+- **LangChain4J `@Tool` integration** is the in-process tool-calling path used throughout this module; the real **Model Context Protocol** (a JSON-RPC protocol to an external tool server) is covered separately in chapter 09
 - **Tool orchestration is automatic** - the LLM decides when and which tools to use
 - **Spring Boot + LangChain4J** provides a production-ready framework for tool-enabled AI
 - **Proper configuration** (database, API keys, logging) is critical for debugging

@@ -3,12 +3,10 @@ package com.techcorp.assistant.module04.memory;
 import dev.langchain4j.memory.ChatMemory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for ConversationMemoryService.
@@ -20,7 +18,7 @@ class ConversationMemoryServiceTest {
 
     @BeforeEach
     void setUp() {
-        RedisTemplate<String, Object> mockRedis = mock(RedisTemplate.class);
+        StringRedisTemplate mockRedis = mock(StringRedisTemplate.class);
         mockStore = new RedisChatMemoryStore(mockRedis);
         memoryService = new ConversationMemoryService(mockStore);
     }

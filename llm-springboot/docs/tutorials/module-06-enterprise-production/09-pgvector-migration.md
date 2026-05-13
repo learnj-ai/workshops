@@ -30,18 +30,32 @@ JVM stack you already know", pgvector is the path of least resistance.
 
 ## The migration in five steps
 
-### 1. Enable the `vector` extension in Postgres
+### 1. Swap the Postgres image for one with pgvector
 
-The workshop's `docker-compose.yml` runs `postgres:16-alpine`, which ships with
-the pgvector extension pre-built but not loaded. Add an init step:
+The workshop's `docker-compose.yml` uses `postgres:16-alpine`, which **does not
+include pgvector** — the extension is a separate C module that must be compiled
+and installed. Running `CREATE EXTENSION vector` against the stock image fails
+with `could not open extension control file ".../vector.control"`.
+
+The cheapest fix is to swap in the official pgvector image — same Postgres,
+plus the extension pre-installed — in `docker-compose.yml`:
+
+```yaml
+postgres:
+  image: pgvector/pgvector:pg16   # was: postgres:16-alpine
+  # ...everything else unchanged: env vars, ports, init scripts, healthcheck
+```
+
+Then turn on the extension for whichever database you want to host vectors in:
 
 ```sql
--- docker/postgres/init-pgvector.sql (mounted as 99-pgvector.sql)
+-- docker/postgres/init-pgvector.sql (mount under /docker-entrypoint-initdb.d/)
 \c workshop_module06
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-Or, if you're using the workshop's existing `init-multiple-dbs.sh`, append:
+Or, if you're extending the workshop's existing `init-multiple-dbs.sh` script,
+append:
 
 ```bash
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname workshop \
@@ -52,6 +66,11 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname workshop_module06 \
 
 A `docker compose down -v && docker compose up -d postgres` recreates the
 volume with the extension loaded.
+
+> Alternatives: if you can't pull `pgvector/pgvector` (air-gapped registry,
+> policy restrictions), build a small custom image `FROM postgres:16-alpine`
+> that `apk add`s `postgresql16-pgvector` (community repo) or compiles pgvector
+> from source. The `pgvector/pgvector` image is just that done for you.
 
 ### 2. Add the LangChain4J pgvector dependency
 
@@ -117,7 +136,7 @@ public class PgVectorStoreConfig {
                 .table(table)
                 .dimension(dimension)
                 .useIndex(useIndex)
-                .indexListSize(100)                                   // HNSW: M; IVFFlat: lists
+                .indexListSize(100)                                   // IVFFlat: number of lists; for HNSW configure m / ef_construction via the relevant builder methods instead — `indexListSize` doesn't map to HNSW's `m` (typical m=16–64)
                 .createTable(createTable)
                 .dropTableFirst(false)                                // never destructive in prod
                 .build();

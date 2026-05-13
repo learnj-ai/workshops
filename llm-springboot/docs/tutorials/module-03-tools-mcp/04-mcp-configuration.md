@@ -208,9 +208,9 @@ Enables detailed logging of LLM interactions. Useful for:
 - High volume systems should log selectively
 - Consider sampling (e.g., 10% of requests)
 
-## MCP Architecture Flow
+## In-Process Tool-Calling Architecture Flow
 
-Here's how MCP connects the ChatModel to tools:
+Here's how the ChatModel, `@Tool` components, and the orchestrator connect (no MCP wire protocol involved — for that, see chapter 09):
 
 ```mermaid
 graph TD

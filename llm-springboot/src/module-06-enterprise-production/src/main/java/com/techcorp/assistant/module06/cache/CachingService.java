@@ -54,20 +54,32 @@ public class CachingService {
     }
 
     public String semanticCacheGet(String query) {
+        // Fast path: exact-match lookup under the per-query key. If we've seen this
+        // exact string before and it hasn't expired, skip the similarity scan
+        // entirely. (Spring's @Cacheable on exactCacheGet covers the in-process
+        // cache; this hits even when the cache abstraction layer has been bypassed.)
+        String exact = redisTemplate.opsForValue().get(SEMANTIC_CACHE_PREFIX + "query:" + query);
+        if (exact != null) {
+            log.debug("Semantic cache exact hit for: {}", query);
+            return exact;
+        }
+
+        // Slow path: embedding-based similarity scan over the index hash.
         Embedding queryEmbedding = getOrComputeEmbedding(query);
-
         Map<Object, Object> cache = redisTemplate.opsForHash().entries(SEMANTIC_CACHE_PREFIX + "queries");
-
         for (Map.Entry<Object, Object> entry : cache.entrySet()) {
             String cachedQuery = (String) entry.getKey();
+            // Skip stale index entries whose per-key value has already expired —
+            // they're orphans waiting for the index TTL backstop to clean them up.
+            String perKey = redisTemplate.opsForValue().get(SEMANTIC_CACHE_PREFIX + "query:" + cachedQuery);
+            if (perKey == null) {
+                continue;
+            }
             Embedding cachedEmbedding = getOrComputeEmbedding(cachedQuery);
-
             double similarity = cosineSimilarity(queryEmbedding, cachedEmbedding);
-
             if (similarity >= similarityThreshold) {
-                String response = (String) entry.getValue();
                 log.info("Semantic cache hit - similarity: {}", similarity);
-                return response;
+                return perKey;
             }
         }
 
@@ -76,16 +88,14 @@ public class CachingService {
     }
 
     public void semanticCachePut(String query, String response) {
-        // Per-query Redis key (not a single hash) so each entry can expire on its own clock —
-        // the previous design held everything inside one hash and reset the hash's TTL on every
-        // put, so popular caches effectively never expired and unpopular ones lived forever.
+        // Per-query Redis key — owns the entry's lifetime. After ttlSeconds it expires
+        // and `semanticCacheGet` will treat any leftover index entry as orphaned.
         String key = SEMANTIC_CACHE_PREFIX + "query:" + query;
         redisTemplate.opsForValue().set(key, response, Duration.ofSeconds(ttlSeconds));
 
-        // Maintain the lookup index (hash of query → response) so semanticCacheGet can iterate
-        // candidates. Each entry's lifetime is bounded by the per-key TTL above; we still set a
-        // TTL on the index hash itself as a backstop for cleanup, but no longer rely on it for
-        // freshness.
+        // Index hash holds the query strings for the similarity scan. Its TTL is a
+        // coarse cleanup backstop — the per-key check in `semanticCacheGet` filters
+        // out stale entries even if the index hasn't been swept yet.
         redisTemplate.opsForHash().put(SEMANTIC_CACHE_PREFIX + "queries", query, response);
         redisTemplate.expire(SEMANTIC_CACHE_PREFIX + "queries", Duration.ofSeconds(ttlSeconds * 2));
 

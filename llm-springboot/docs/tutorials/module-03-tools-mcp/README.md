@@ -1,6 +1,6 @@
 # Welcome to Tools and MCP: Empowering LLMs with Real-World Data
 
-Welcome to a practical exploration of how modern AI systems interact with the real world! This tutorial teaches you how to extend Large Language Models beyond simple text generation by connecting them to databases, external APIs, and enterprise systems. You'll build a production-ready Spring Boot AI assistant that uses the Model Context Protocol (MCP) to orchestrate tool execution, transforming a conversational interface into an intelligent automation platform.
+Welcome to a practical exploration of how modern AI systems interact with the real world! This tutorial teaches you how to extend Large Language Models beyond simple text generation by connecting them to databases, external APIs, and enterprise systems. You'll build a production-ready Spring Boot AI assistant that uses **LangChain4J `@Tool` integration** (in-process tool calling) for the bulk of the module, and at the end (chapter 09) wire up a real **Model Context Protocol (MCP)** client against an external tool server so you can see how the in-process path differs from the cross-process MCP protocol.
 
 ![xkcd: Automation](https://imgs.xkcd.com/comics/automation.png)
 
@@ -10,7 +10,7 @@ Welcome to a practical exploration of how modern AI systems interact with the re
 
 - **Implement database tools** using LangChain4J's `@Tool` annotation for SQL-based data access
 - **Integrate external APIs** (weather, payment gateways, CRM systems) with intelligent error handling
-- **Understand the Model Context Protocol** and how it standardizes tool registration and execution
+- **Understand the in-process tool-calling pattern** (LangChain4J `@Tool`) and how it differs from the **Model Context Protocol (MCP)** wire protocol covered in chapter 09
 - **Build a tool orchestrator** that automatically selects and chains multiple tools based on user intent
 - **Design error-resilient tools** with proper validation, logging, and fallback mechanisms
 - **Test tool-enabled LLM systems** using both unit and integration testing strategies
@@ -70,11 +70,12 @@ This tutorial is organized into the following chapters:
 1. **Getting Started** - Set up PostgreSQL, configure OpenAI, and run your first tool-enabled assistant
 2. **Database Tools: Connecting AI to Data** - Build tools that query PostgreSQL using the `@Tool` annotation
 3. **External API Tools: Weather Integration** - Create tools that call third-party REST APIs
-4. **MCP Server Configuration: The Foundation** - Configure the ChatModel and understand MCP principles
+4. **Chat-Model Configuration for In-Process Tools** - Configure the `ChatModel` that orchestrates LangChain4J `@Tool` execution
 5. **Tool Orchestrator: The Intelligence Layer** - Build the service that coordinates tool execution
 6. **REST Controller: The API Gateway** - Design endpoints that expose tool-enabled AI functionality
 7. **Testing Tools and Orchestration** - Write comprehensive tests for tools and integration flows
-8. **Conclusion** - Synthesize learning and explore advanced tool patterns
+8. **Real MCP: Connecting to an External Tool Server** - Wire up a real MCP client (chapter 09) and see how it differs from in-process `@Tool` calling
+9. **Conclusion** - Synthesize learning and explore advanced tool patterns
 
 ## Prerequisites
 

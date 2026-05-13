@@ -108,23 +108,33 @@ public class CachingService {
     }
 
     public String semanticCacheGet(String query) {
-        // Get or compute embedding for query
-        Embedding queryEmbedding = getOrComputeEmbedding(query);
+        // Fast path: exact-match per-query key. Skip the similarity scan if we've
+        // seen this exact string before and it hasn't expired.
+        String exact = redisTemplate.opsForValue()
+            .get(SEMANTIC_CACHE_PREFIX + "query:" + query);
+        if (exact != null) {
+            log.debug("Semantic cache exact hit for: {}", query);
+            return exact;
+        }
 
-        // Search for similar cached queries
+        // Slow path: embedding-based similarity scan over the index hash.
+        Embedding queryEmbedding = getOrComputeEmbedding(query);
         Map<Object, Object> cache = redisTemplate.opsForHash()
             .entries(SEMANTIC_CACHE_PREFIX + "queries");
 
         for (Map.Entry<Object, Object> entry : cache.entrySet()) {
             String cachedQuery = (String) entry.getKey();
-            Embedding cachedEmbedding = getOrComputeEmbedding(cachedQuery);
+            // Skip stale index entries whose per-key value already expired.
+            String perKey = redisTemplate.opsForValue()
+                .get(SEMANTIC_CACHE_PREFIX + "query:" + cachedQuery);
+            if (perKey == null) continue;
 
+            Embedding cachedEmbedding = getOrComputeEmbedding(cachedQuery);
             double similarity = cosineSimilarity(queryEmbedding, cachedEmbedding);
 
             if (similarity >= similarityThreshold) {
-                String response = (String) entry.getValue();
                 log.info("Semantic cache hit - similarity: {}", similarity);
-                return response;
+                return perKey;
             }
         }
 

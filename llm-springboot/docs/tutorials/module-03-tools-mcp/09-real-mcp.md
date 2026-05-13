@@ -239,7 +239,7 @@ The LLM sees both the same way.
 
 ## When to use MCP vs `@Tool`
 
-| Concern                  | `@Tool` (chapters 02-08)                                    | MCP (this chapter)                                       |
+| Concern                  | `@Tool` (chapters 02-07)                                    | MCP (this chapter)                                       |
 |--------------------------|-------------------------------------------------------------|----------------------------------------------------------|
 | Tool author              | You, in Java                                                | Anyone, in any language                                  |
 | Discovery                | Compile time                                                | Runtime (`tools/list`)                                   |
@@ -265,8 +265,9 @@ accepts both at once.
   inside its declared roots. Treat each MCP server's permissions the way you
   treat a service account: minimum required scope, audit the manifests.
 - **Tool name collisions.** If two MCP servers expose a `read_file`, the
-  `McpToolProvider` builder needs a `toolsNameFilter` or per-server prefix.
-  Decide a naming convention before you wire up your second server.
+  `McpToolProvider` builder's `filterToolNames(String...)` lets you narrow each
+  client's exposed tool list, or use the more general `filter(BiPredicate<McpClient, ToolSpecification>)`
+  for per-server logic. Decide a naming convention before you wire up your second server.
 
 ## What this chapter did NOT do
 
