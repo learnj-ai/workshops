@@ -44,7 +44,7 @@
     </build>
 
     <modules>
-        <module>src/module-01-vectors-embeddings</module>
+        <module>src/module-01-vector-embeddings</module>
         <module>src/module-02-advanced-rag</module>
         <module>src/module-03-tools-mcp</module>
         <module>src/module-04-chatbots-to-agents</module>

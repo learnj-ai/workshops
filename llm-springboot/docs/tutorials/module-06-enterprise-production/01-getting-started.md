@@ -12,6 +12,7 @@ Before you begin, ensure you have the following installed:
 - **Docker** (optional) - For running Redis locally
 - **OpenAI API key** - Required for LLM calls and evaluation
 - **curl or Postman** - For testing REST API endpoints
+- **Dokimos installed locally** — the evaluation framework used in this module is not on Maven Central. See [02-dokimos-evaluation.md](02-dokimos-evaluation.md#prerequisite--install-dokimos-locally-first) for the `git clone + mvn install` steps; do them **before** running `mvn install` on Module 06 itself, or you'll hit `Could not find artifact dev.dokimos:dokimos-core:jar:0.14.2`.
 
 ## Clone and Setup
 
@@ -296,7 +297,7 @@ rag_queries_total{type="rag"} 0.0
 Use curl to query the RAG system:
 
 ```bash
-curl -X POST http://localhost:8086/api/v1/rag/query \
+curl -X POST http://localhost:8086/api/v1/production/query \
   -H "Content-Type: application/json" \
   -d '{
     "query": "What security features does the product offer?"
@@ -440,12 +441,12 @@ curl -X POST http://localhost:8086/api/v1/eval/run \
 
 ```bash
 # First request
-curl -X POST http://localhost:8086/api/v1/rag/query \
+curl -X POST http://localhost:8086/api/v1/production/query \
   -H "Content-Type: application/json" \
   -d '{"query": "What is the pricing for the basic plan?"}'
 
 # Second request (should be cached if Redis is running)
-curl -X POST http://localhost:8086/api/v1/rag/query \
+curl -X POST http://localhost:8086/api/v1/production/query \
   -H "Content-Type: application/json" \
   -d '{"query": "What is the pricing for the basic plan?"}'
 ```

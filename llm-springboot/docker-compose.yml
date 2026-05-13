@@ -1,20 +1,23 @@
 version: '3.8'
 
 services:
-  # PostgreSQL for Module 03 (Tools) and beyond
+  # PostgreSQL for Module 03 (Tools) and Module 04 (Agents).
+  # Each module gets its own database; see docker/postgres/init-multiple-dbs.sh.
   postgres:
     image: postgres:16-alpine
     container_name: llm-workshop-postgres
     environment:
-      POSTGRES_DB: workshop_db
+      POSTGRES_DB: workshop
       POSTGRES_USER: workshop
       POSTGRES_PASSWORD: workshop123
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./src/module-03-tools-mcp/src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-      - ./src/module-03-tools-mcp/src/main/resources/db/data.sql:/docker-entrypoint-initdb.d/02-data.sql
+      - ./docker/postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/00-init-multiple-dbs.sh:ro
+      - ./src/module-03-tools-mcp/src/main/resources/db/schema.sql:/sql-init/module-03-schema.sql:ro
+      - ./src/module-03-tools-mcp/src/main/resources/db/data.sql:/sql-init/module-03-data.sql:ro
+      - ./src/module-04-chatbots-to-agents/src/main/resources/db/init-db.sql:/sql-init/module-04-init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U workshop"]
       interval: 10s

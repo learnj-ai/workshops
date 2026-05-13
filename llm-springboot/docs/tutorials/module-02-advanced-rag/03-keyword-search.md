@@ -90,6 +90,24 @@ graph TD
 
 **Key insight**: While vector search uses a pre-built index with embeddings, keyword search **dynamically scores all documents** at query time. This is acceptable because BM25 is fast (O(n) in document count) and our in-memory corpus is small (~100-200 segments).
 
+> **About `IndexedSegment` and `searchSegments(...)`.** These names show up
+> below as if they were already familiar. They are defined in Module 02 itself —
+> not in Module 01 — and form a small extension of the vector-store interface
+> introduced in chapter 03 (`02-rag-pipeline.md`'s "Vector store interface"
+> section). Specifically:
+>
+> - `IndexedSegment` is a record holding `(TextSegment segment, Embedding embedding)`
+>   produced by `VectorStoreService` when documents are chunked + embedded at
+>   startup.
+> - `VectorStoreService#searchSegments(String query, int k)` returns the top-`k`
+>   `IndexedSegment`s by cosine similarity. The keyword path reuses the same
+>   corpus via `vectorStoreService.getAllSegments(ChunkingStrategy.RECURSIVE)`
+>   and scores it with BM25 instead of cosine.
+>
+> If you haven't read chapter 03 yet, skim its "Vector store interface" subsection
+> first — it shows the type's full definition. The keyword search code below
+> extends that interface; it does not introduce new types from Module 01.
+
 ## Code Deep Dive
 
 Let's explore the `KeywordSearchService` implementation in detail.
@@ -120,41 +138,36 @@ public class KeywordSearchService {
             return List.of();
         }
 
-        Set<String> queryTerms = tokenize(query);
+        Set<String> queryTerms = uniqueTokens(query);
         if (queryTerms.isEmpty()) {
             return List.of();
         }
 
-        double avgDocLength = allSegments.stream()
-                .mapToInt(seg -> tokenize(seg.segment().text()).size())
+        // Tokenize each segment exactly once per call. We need both:
+        //   - the full token list (for BM25 length normalization — total tokens, not unique)
+        //   - the unique-token set (for fast doc-frequency contains-checks)
+        List<SegmentTokens> tokenized = new ArrayList<>(allSegments.size());
+        for (IndexedSegment indexed : allSegments) {
+            tokenized.add(SegmentTokens.of(indexed));
+        }
+
+        double avgDocLength = tokenized.stream()
+                .mapToInt(s -> s.allTokens.size())   // total tokens
                 .average()
                 .orElse(1.0);
 
-        int totalDocs = allSegments.size();
+        int totalDocs = tokenized.size();
 
-        // Precompute document frequencies for each query term
         Map<String, Integer> documentFrequencies = new HashMap<>();
         for (String term : queryTerms) {
-            int df = (int) allSegments.stream()
-                    .filter(seg -> tokenize(seg.segment().text()).contains(term))
-                    .count();
+            int df = 0;
+            for (SegmentTokens s : tokenized) {
+                if (s.uniqueTokens.contains(term)) df++;
+            }
             documentFrequencies.put(term, df);
         }
 
-        record ScoredSegment(TextSegment segment, double score) {}
-
-        return allSegments.stream()
-                .map(indexed -> {
-                    double score = computeBM25Score(
-                            indexed.segment().text(), queryTerms,
-                            documentFrequencies, totalDocs, avgDocLength);
-                    return new ScoredSegment(indexed.segment(), score);
-                })
-                .filter(scored -> scored.score() > 0)
-                .sorted(Comparator.comparingDouble(ScoredSegment::score).reversed())
-                .limit(maxResults)
-                .map(ScoredSegment::segment)
-                .toList();
+        // …score each segment and return top-k…
     }
 }
 ```
@@ -162,7 +175,8 @@ public class KeywordSearchService {
 **Design decisions:**
 - **`Supplier<List<IndexedSegment>>`**: Lazy loading of segments—allows testing with fixed segments
 - **Constants `K1=1.2, B=0.75`**: Standard BM25 parameters (could be made configurable)
-- **Precompute document frequencies**: Avoid recalculating for each document
+- **Tokenize once per search call**: every segment is split into tokens exactly one time per `search()` invocation; the result feeds both length normalization and doc-frequency lookups, instead of re-tokenizing for each query term.
+- **Two token views, one source**: a `List<String>` of total tokens for BM25 length normalization (correct denominator) and a `Set<String>` for fast `contains(term)` doc-frequency checks.
 - **Filter `score > 0`**: Only return documents containing at least one query term
 
 ### BM25 Score Computation
@@ -171,15 +185,14 @@ The core ranking algorithm:
 
 ```java
 private double computeBM25Score(
-        String documentText,
+        SegmentTokens segment,
         Set<String> queryTerms,
         Map<String, Integer> documentFrequencies,
         int totalDocs,
         double avgDocLength) {
 
-    Set<String> docTerms = tokenize(documentText);
-    int docLength = docTerms.size();
-    Map<String, Long> termFrequencies = countTermFrequencies(documentText);
+    int docLength = segment.allTokens.size();   // BM25 wants total tokens, not unique
+    Map<String, Long> termFrequencies = segment.termFrequencies;
 
     double score = 0.0;
     for (String term : queryTerms) {
@@ -218,19 +231,38 @@ private double computeBM25Score(
 
 ### Tokenization
 
-Simple but effective tokenization:
+Simple but effective tokenization. We compute two views from the same split: the full token list (for length) and the unique set (for doc-frequency contains-checks). `SegmentTokens.of(...)` produces all three together, so each segment is tokenized exactly once per search call.
 
 ```java
-private Set<String> tokenize(String text) {
-    return Arrays.stream(text.toLowerCase().split("\\W+"))
-            .filter(t -> !t.isEmpty() && t.length() > 1)
-            .collect(Collectors.toSet());
+private static Set<String> uniqueTokens(String text) {
+    Set<String> set = new HashSet<>();
+    for (String token : text.toLowerCase().split("\\W+")) {
+        if (!token.isEmpty() && token.length() > 1) set.add(token);
+    }
+    return set;
 }
 
-private Map<String, Long> countTermFrequencies(String text) {
-    return Arrays.stream(text.toLowerCase().split("\\W+"))
-            .filter(t -> !t.isEmpty())
-            .collect(Collectors.groupingBy(t -> t, Collectors.counting()));
+private static List<String> allTokens(String text) {
+    List<String> list = new ArrayList<>();
+    for (String token : text.toLowerCase().split("\\W+")) {
+        if (!token.isEmpty() && token.length() > 1) list.add(token);
+    }
+    return list;
+}
+
+private record SegmentTokens(
+        IndexedSegment indexed,
+        List<String> allTokens,
+        Set<String> uniqueTokens,
+        Map<String, Long> termFrequencies) {
+
+    static SegmentTokens of(IndexedSegment indexed) {
+        List<String> tokens = allTokens(indexed.segment().text());
+        Set<String> unique = new HashSet<>(tokens);
+        Map<String, Long> tf = new HashMap<>();
+        for (String t : tokens) tf.merge(t, 1L, Long::sum);
+        return new SegmentTokens(indexed, tokens, unique, tf);
+    }
 }
 ```
 
@@ -238,8 +270,9 @@ private Map<String, Long> countTermFrequencies(String text) {
 - **Lowercase normalization**: "VPN" matches "vpn"
 - **Split on non-word characters**: `\\W+` splits on spaces, punctuation, etc.
 - **Filter length > 1**: Removes single-character tokens ("a", "I")
-- **Set for `tokenize`**: Unique terms for document frequency calculation
-- **Map for `countTermFrequencies`**: Preserve counts for TF calculation
+- **`allTokens` (List, with duplicates)**: feeds BM25's `docLength` (total tokens) and is the *correct* denominator inside the length-normalization term `b × docLength / avgDocLength`. Using unique-token count here — as some BM25 walkthroughs mistakenly do — penalizes vocabulary-rich documents and gives wrong rankings.
+- **`uniqueTokens` (Set)**: cheap `contains(term)` for document-frequency counting (does *any* occurrence of the term appear in this segment?).
+- **`termFrequencies` (Map)**: per-term counts for the TF numerator.
 
 **Production considerations:**
 - **Stopword removal**: Filter common words ("the", "and", "is") to improve precision

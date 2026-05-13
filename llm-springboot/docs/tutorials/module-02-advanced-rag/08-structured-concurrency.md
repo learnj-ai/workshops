@@ -338,19 +338,20 @@ scope.join();  // Throws exception from vectorTask
 
 ### Exercise 3: Implement Timeout
 
-Use a deadline to limit total execution time:
+Bound total execution time. The JEP 505 preview API only exposes a single-arg `open(Joiner)` (which is what `RAGController` uses) — a `Duration`-bearing overload is not in the API the rest of this module teaches. Use a deadline pattern instead, e.g. a scheduled cancellation or `Future.get(timeout)` style at the caller:
 
 ```java
-try (var scope = StructuredTaskScope.open(Joiner.allSuccessfulOrThrow(),
-                                          Duration.ofSeconds(5))) {
-    // Fork tasks...
-    scope.join();  // Throws if any task exceeds 5 seconds
+try (var scope = StructuredTaskScope.open(Joiner.allSuccessfulOrThrow())) {
+    Subtask<List<Hit>> vector  = scope.fork(this::vectorSearch);
+    Subtask<List<Hit>> keyword = scope.fork(this::keywordSearch);
+    scope.joinUntil(Instant.now().plus(Duration.ofSeconds(5)));  // joinUntil enforces the deadline
+    return merge(vector.get(), keyword.get());
 }
 ```
 
 **Questions to explore:**
-- What happens if a search takes longer than 5 seconds?
-- How do you handle timeout exceptions gracefully?
+- What happens if a search takes longer than 5 seconds? (`joinUntil` throws `TimeoutException`; in-flight forks are cancelled.)
+- How do you handle timeout exceptions gracefully and surface a partial result?
 
 ### Exercise 4: Implement "First Successful Result" Pattern
 

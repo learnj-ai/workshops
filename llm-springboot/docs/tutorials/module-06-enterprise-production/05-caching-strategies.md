@@ -94,13 +94,17 @@ public class CachingService {
                           EmbeddingModel embeddingModel) {
         this.redisTemplate = redisTemplate;
         this.embeddingModel = embeddingModel;
-        this.embeddingCache = new HashMap<>();
+        // ConcurrentHashMap: multiple request threads can read/write the embedding
+        // cache simultaneously. A plain HashMap would race under load.
+        this.embeddingCache = new ConcurrentHashMap<>();
     }
 
-    @Cacheable(value = "exactQueryCache", key = "#query")
+    // unless = "#result == null" avoids caching the cache-miss sentinel — otherwise
+    // a null return value gets cached and every later call short-circuits here.
+    @Cacheable(value = "exactQueryCache", key = "#query", unless = "#result == null")
     public String exactCacheGet(String query) {
         log.debug("Exact cache miss for: {}", query);
-        return null; // Cache miss handled by @Cacheable
+        return null;
     }
 
     public String semanticCacheGet(String query) {
@@ -129,13 +133,21 @@ public class CachingService {
     }
 
     public void semanticCachePut(String query, String response) {
-        // Store in semantic cache
+        // Per-query Redis key so each entry has its OWN TTL clock. The previous
+        // design put everything inside one hash and called `expire(...)` on the
+        // hash on every put — which reset the TTL for the whole hash, so popular
+        // caches effectively never expired and stale entries leaked forever.
+        String key = SEMANTIC_CACHE_PREFIX + "query:" + query;
+        redisTemplate.opsForValue().set(key, response, Duration.ofSeconds(ttlSeconds));
+
+        // The hash is still used as a lookup index for semanticCacheGet's
+        // similarity scan; its own TTL is a coarse backstop, not the source
+        // of freshness.
         redisTemplate.opsForHash()
             .put(SEMANTIC_CACHE_PREFIX + "queries", query, response);
         redisTemplate.expire(SEMANTIC_CACHE_PREFIX + "queries",
-            ttlSeconds, TimeUnit.SECONDS);
+            Duration.ofSeconds(ttlSeconds * 2));
 
-        // Cache embedding
         getOrComputeEmbedding(query);
 
         log.debug("Cached response for query: {}", query);
@@ -166,7 +178,15 @@ public class CachingService {
             normB += vectorB[i] * vectorB[i];
         }
 
-        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+        // Guard against zero-norm vectors. An all-zero embedding (e.g. empty
+        // query) would otherwise produce 0/0 = NaN, which the >= threshold
+        // check silently swallows as a cache miss while masking the real bug.
+        double normProduct = Math.sqrt(normA) * Math.sqrt(normB);
+        if (normProduct == 0.0) {
+            log.warn("cosineSimilarity called with zero-norm vector — returning 0");
+            return 0.0;
+        }
+        return dotProduct / normProduct;
     }
 }
 ```
@@ -185,9 +205,11 @@ public class CachingService {
 - Returns first match above threshold
 
 **Embedding cache**:
-- In-memory `Map<String, Embedding>` avoids redundant embedding calls
-- Critical for performance (embedding generation costs ~100ms)
-- Bounded by JVM memory (acceptable for moderate query volumes)
+- In-memory `ConcurrentHashMap<String, Embedding>` — thread-safe for concurrent reads/writes; a plain `HashMap` would race under load.
+- Avoids redundant embedding calls (~100 ms each).
+- Bounded by JVM memory (acceptable for moderate query volumes).
+
+> **Scale limitation — O(n) semantic lookup.** `semanticCacheGet` walks **every** entry in `semantic:queries` and recomputes cosine similarity per query. That's fine for a workshop cache of a few hundred entries, but at production scale every lookup gets linearly slower as the cache grows. The escape hatch is approximate nearest-neighbour (ANN) search — Redis Stack ships HNSW under `FT.SEARCH ... VECTOR`, and dedicated vector DBs (Qdrant, Weaviate, Milvus) ship it natively. Wrap the cache behind a `SemanticIndex` interface so swapping the linear scan for HNSW is a one-class change, not a rewrite.
 
 ### Configuration
 
@@ -423,7 +445,7 @@ Optimize the semantic cache for better performance.
 
 **Implementation steps**:
 
-1. **Install a vector library** (e.g., Hnswlib Java bindings or use Redis with RediSearch):
+1. **Install a vector library** (e.g., Hnswlib Java bindings or use Redis with RediSearch). The coordinates below are illustrative — Hnswlib's Java port lives at [github.com/jelmerk/hnswlib](https://github.com/jelmerk/hnswlib); check the README for the latest groupId/artifactId/version and the current builder signatures, since this library is on an active release train and the snippet below targets the 1.x API shape rather than a specific patch release.
 
 ```xml
 <dependency>

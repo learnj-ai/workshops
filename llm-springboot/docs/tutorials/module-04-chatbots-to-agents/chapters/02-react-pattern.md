@@ -231,6 +231,36 @@ private String executeAction(String action) {
 }
 ```
 
+> **Why this parser is brittle, and what to use in production.**
+>
+> The regex above (`(\\w+)\\(([^)]*)\\)`) only handles single-line, comma-free
+> calls with no nested parentheses. It breaks on:
+>
+> | Input the LLM produced                                          | What goes wrong                                                                              |
+> |-----------------------------------------------------------------|----------------------------------------------------------------------------------------------|
+> | `getCustomerInfo("O'Brien, Sean")`                              | The `replaceAll("['\"]", "")` strips the apostrophe, so the lookup runs on `OBrien, Sean`.   |
+> | `getCurrentWeather("San José, Spain (region)")`                | The first `)` ends the match — you call `getCurrentWeather("San José, Spain (region")`.       |
+> | `searchTickets({"status": "open", "owner": "alice"})`           | Curly-brace JSON arg looks fine to the LLM; the regex captures the whole `{...}` as one param. |
+> | `getCurrentWeather('Boston')` with smart quotes (`'…'`)         | `replaceAll("['\"]", "")` keeps the smart quotes; lookup hits `'Boston'` literally.           |
+>
+> The fix is to stop parsing free-form text the LLM emitted and instead use a
+> structured tool-call channel:
+>
+> 1. **Migrate to LangChain4J `@Tool` annotations + `AiServices`.** The OpenAI /
+>    Anthropic / Bedrock backends return tool calls as structured JSON
+>    (`{"name": "getCurrentWeather", "arguments": {"city": "San José, Spain"}}`).
+>    LangChain4J dispatches them directly to your `@Tool`-annotated methods —
+>    no regex, no quote-stripping. See `module-03-tools-mcp` for the pattern.
+> 2. **Or, if you must keep a custom ReAct loop, ask the model for JSON.** Change
+>    the action format from `tool_name(args)` to
+>    `ACTION: {"tool": "getCurrentWeather", "args": {"city": "..."}}` and parse
+>    with Jackson. JSON gives you proper string escaping, nested structures,
+>    and a type-safe deserialization target.
+>
+> The regex-based parser in this chapter is fine *as a teaching tool* — it
+> makes the Thought / Action / Observation loop visible without hiding it
+> behind a framework. Just don't ship it.
+
 **Action Execution Flow:**
 
 ```

@@ -1,27 +1,47 @@
-# MCP Server Configuration: The Foundation
+# Chat-Model Configuration for In-Process Tools
 
-In this chapter, you'll learn about the Model Context Protocol (MCP), how to configure the ChatModel that orchestrates tool execution, and understand the architectural decisions behind MCP-based tool integration.
+In this chapter, you'll learn how to configure the `ChatModel` that orchestrates LangChain4J `@Tool` execution and the architectural decisions behind in-process tool integration.
 
-## What Is the Model Context Protocol?
+> **Scope note.** This chapter, and `02-database-tools.md` / `03-api-tools.md`,
+> teach **LangChain4J in-process tool calling** — Java methods annotated with
+> `@Tool`, discovered by the framework at compile time and handed to the model
+> as JSON tool schemas via the OpenAI Chat Completions API. That is *not* the
+> Model Context Protocol. The Model Context Protocol is a JSON-RPC protocol
+> between your application and a separate tool-server process — different
+> protocol, different process boundary, different distribution model. See
+> **chapter 09 (`09-real-mcp.md`)** for the real MCP client, the wire
+> handshake, and `tools/list` over JSON-RPC. The two complement each other in
+> production; this chapter covers the in-process half.
 
-The **Model Context Protocol (MCP)** is a standardized way for Large Language Models to discover and execute tools. Think of it as a contract between:
+## What Is Tool Calling?
+
+**Tool calling** is the LLM-provider mechanism (OpenAI's `tools` field,
+Anthropic's `tools` block, etc.) for letting a chat completion request return
+a structured invocation instead of free-form text. LangChain4J wraps those
+provider-specific protocols behind a uniform Java surface:
 
 - **The LLM** - The intelligent agent that decides when tools are needed
-- **The Tool Registry** - The system that provides available tools
-- **The Tools** - Functions that perform specific actions (query database, call API, etc.)
+- **The Tool Registry** - LangChain4J's introspection of your `@Tool`-annotated
+  classes into `ToolSpecification` objects
+- **The Tools** - Java methods that perform specific actions (query database,
+  call API, etc.)
 
-### Why MCP Matters
+### Why this layer matters
 
-Before MCP, every AI framework had its own tool format:
+Before LangChain4J's tool abstraction, every AI framework had its own tool format:
 - OpenAI: Function calling with JSON schemas
 - Anthropic: Tools with specific XML formats
 - LangChain: Custom tool interfaces
 
-MCP provides:
-- **Standardization** - Tools work across different LLM providers
-- **Discoverability** - LLMs can introspect available tools
+LangChain4J `@Tool` integration provides:
+- **Provider portability** - The same `@Tool` method works against OpenAI, Anthropic, or Bedrock chat models
+- **Discoverability** - LangChain4J generates JSON schemas from your method signatures
 - **Type safety** - Parameters are validated before execution
 - **Observability** - Tool execution is logged and traceable
+
+For tools that come from outside your codebase (vendor servers, cross-team
+services, dynamic catalogues), see the **Model Context Protocol** chapter at
+`09-real-mcp.md`.
 
 ## The MCPServerConfig Class
 

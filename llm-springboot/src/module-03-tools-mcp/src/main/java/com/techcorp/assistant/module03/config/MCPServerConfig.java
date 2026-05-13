@@ -37,6 +37,7 @@ public class MCPServerConfig {
                 .modelName(modelName)
                 .temperature(0.7)
                 .timeout(Duration.ofSeconds(60))
+                .maxRetries(3)
                 .logRequests(true)
                 .logResponses(true)
                 .build();

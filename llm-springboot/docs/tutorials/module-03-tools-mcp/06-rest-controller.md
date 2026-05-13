@@ -192,22 +192,17 @@ public record ChatRequest(String message) {
 package com.techcorp.assistant.module03.dto;
 
 /**
- * Response DTO for chat endpoint.
+ * Response DTO for the chat endpoint.
  *
- * @param response The AI-generated response (potentially tool-augmented)
- * @param toolsUsed Names of tools that were invoked during processing
+ * @param response The AI-generated response (potentially tool-augmented).
  */
-public record ChatResponse(String response, java.util.List<String> toolsUsed) {
-    public ChatResponse(String response) {
-        this(response, java.util.List.of());
-    }
+public record ChatResponse(String response) {
 }
 ```
 
 **Design notes**:
-- Primary constructor includes `toolsUsed` for observability
-- Convenience constructor for simple responses without tool tracking
-- Future enhancement: add `metadata`, `tokens`, `cost` fields
+- Single field: the model's textual answer.
+- Tool-call observability (which tools fired and with what arguments) is not exposed by `ToolOrchestrator` today — the orchestrator only returns the final `String` answer, so any `toolsUsed`/`metadata` field would be permanently empty. To surface tool calls, wrap the LangChain4J `ToolExecutor` with an interceptor that captures the calls and thread them up to the controller. That's worth doing as a follow-up exercise; until then, the DTO stays single-field rather than promising metadata it can't deliver.
 
 ## API Usage Examples
 
@@ -224,8 +219,7 @@ curl -X POST http://localhost:8083/api/v1/assistant/chat \
 **Response**:
 ```json
 {
-  "response": "The email address for customer 12345 (Alice Johnson) is alice.johnson@example.com.",
-  "toolsUsed": []
+  "response": "The email address for customer 12345 (Alice Johnson) is alice.johnson@example.com."
 }
 ```
 
@@ -263,10 +257,10 @@ Module 03: Tools & MCP - OK
 
 ### 1. Global Exception Handler
 
-Create a `@ControllerAdvice` to handle exceptions globally:
+The module ships a `@RestControllerAdvice` (see `controller/GlobalExceptionHandler.java`) that turns uncaught exceptions into structured JSON error responses instead of Spring's default error page:
 
 ```java
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -283,10 +277,12 @@ public class GlobalExceptionHandler {
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(new ErrorResponse("Internal Error", "An unexpected error occurred"));
     }
-}
 
-record ErrorResponse(String error, String message) {}
+    public record ErrorResponse(String error, String message) {}
+}
 ```
+
+`@RestControllerAdvice` is `@ControllerAdvice` + `@ResponseBody`, so the returned `ErrorResponse` is serialized to JSON automatically. Note that `AssistantController.chat()` already wraps its happy-path call in a `try/catch` and returns a `ChatResponse`, so the advice mainly catches `IllegalArgumentException` from validation and unhandled errors from any new endpoints you add.
 
 ### 2. Request Validation with Bean Validation
 

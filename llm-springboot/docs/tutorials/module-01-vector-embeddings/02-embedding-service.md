@@ -100,20 +100,9 @@ The `Embedding` object is a LangChain4J abstraction that holds:
 
 ### Initialization and Verification
 
-The service includes a `@PostConstruct` hook to verify the model loads correctly:
+`EmbeddingService` exposes a `dimension()` helper (`embeddingModel.dimension()`) used by the rest of the app to size vectors at 384.
 
-```java
-@PostConstruct
-public void post() {
-    System.out.println(embeddingModel.dimension());
-}
-```
-
-**Breakdown**:
-- **`@PostConstruct`**: Spring calls this method after dependency injection completes
-- **`embeddingModel.dimension()`**: Forces model initialization (lazy loading)
-- **`System.out.println()`**: Logs "384" to console to confirm success
-- **Why this matters**: The first model call triggers a ~80MB model download/load, so we do it at startup rather than on the first search request
+Model warm-up happens indirectly: when Spring starts `VectorStoreService`, its own `@PostConstruct` calls `generateEmbedding(...)` for every loaded document segment, which triggers the first `AllMiniLmL6V2EmbeddingModel` load (~80 MB). See `03-vector-store.md` for that flow. There is no `@PostConstruct` on `EmbeddingService` itself.
 
 ## Relationships to Other Components
 

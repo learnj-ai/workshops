@@ -11,7 +11,7 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>module-01-vectors-embeddings</artifactId>
+    <artifactId>module-01-vector-embeddings</artifactId>
     <name>Module 1: Vectors and Embeddings</name>
     <description>The Physics of AI — embedding generation, distance metrics, chunking, and vector store integration</description>
 

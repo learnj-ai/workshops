@@ -62,7 +62,7 @@ curl -X POST http://localhost:8084/api/v1/agent/execute \
 
 Connect to PostgreSQL:
 ```bash
-docker exec -it llm-workshop-postgres psql -U workshop -d workshop_db
+docker exec -it llm-workshop-postgres psql -U workshop -d workshop_module04  # or workshop_module03
 ```
 
 Sample queries:

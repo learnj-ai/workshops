@@ -101,7 +101,7 @@ docker compose up -d postgres
 docker logs llm-workshop-postgres
 
 # Test connection
-psql -h localhost -U workshop -d workshop_db
+psql -h localhost -U workshop -d workshop_module03  # or workshop_module04
 # Password: workshop123
 ```
 
@@ -181,7 +181,7 @@ docker compose restart prometheus grafana
 **Solutions**:
 - Enable semantic caching in Module 06
 - Reduce context size with token optimization
-- Use faster model (gpt-3.5-turbo instead of gpt-4)
+- Use faster model (`gpt-4o-mini` instead of `gpt-4o`)
 - Check network latency to OpenAI API
 
 ### High Memory Usage
@@ -259,7 +259,7 @@ MONITOR
 
 ```bash
 # Connect to PostgreSQL
-docker exec -it llm-workshop-postgres psql -U workshop -d workshop_db
+docker exec -it llm-workshop-postgres psql -U workshop -d workshop_module03  # or workshop_module04
 
 # List tables
 \dt

@@ -74,7 +74,7 @@ public class MetricsCollector {
 
         // Timer for response time
         this.responseTimer = Timer.builder("rag.response.time")
-                .description("RAG query response time in milliseconds")
+                .description("RAG query response time (Prometheus exports as `_seconds`)")
                 .tag("type", "rag")
                 .register(meterRegistry);
 
@@ -279,6 +279,105 @@ curl http://localhost:8086/actuator/prometheus | grep eval_pass_rate
 ```
 
 **Expected Outcome**: The pass rate metric updates after each evaluation, allowing you to track quality trends over time.
+
+## Scraping Metrics in OpenShift
+
+Locally we let Prometheus scrape the app directly (see `docker/prometheus/prometheus.yml`). In OpenShift the recommended path is to **enable user-workload monitoring** and declare a `ServiceMonitor`/`PodMonitor` — the cluster-managed Prometheus then picks up your pod via label selector, and you don't run your own Prometheus instance.
+
+### 1. Enable user-workload monitoring (cluster-admin)
+
+OpenShift 4.6+ ships a built-in monitoring stack but only scrapes platform components by default. Enable user workloads by patching the cluster monitoring config:
+
+```yaml
+# cluster-monitoring-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-monitoring-config
+  namespace: openshift-monitoring
+data:
+  config.yaml: |
+    enableUserWorkload: true
+```
+
+```bash
+oc apply -f cluster-monitoring-config.yaml
+oc -n openshift-user-workload-monitoring get pods   # should show prometheus-user-workload-* running
+```
+
+### 2. Expose the `/actuator/prometheus` endpoint behind a Service port
+
+Make sure the Service that fronts your deployment exposes the actuator port (8086 in this module) and the pod template carries a label the `ServiceMonitor` can match — e.g. `app: module-06-production`.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: module-06-production
+  labels:
+    app: module-06-production
+spec:
+  selector:
+    app: module-06-production
+  ports:
+    - name: metrics            # the ServiceMonitor matches this name, not the number
+      port: 8086
+      targetPort: 8086
+```
+
+### 3. Declare a `ServiceMonitor` in the application namespace
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: module-06-production
+  namespace: rag-prod            # same namespace as the Service above
+  labels:
+    app: module-06-production
+spec:
+  selector:
+    matchLabels:
+      app: module-06-production
+  endpoints:
+    - port: metrics              # matches the Service port name
+      path: /actuator/prometheus
+      interval: 30s
+      scheme: http
+      # If you've enabled TLS on the actuator port, set scheme: https and add tlsConfig.
+```
+
+```bash
+oc apply -f servicemonitor.yaml
+oc -n openshift-user-workload-monitoring port-forward svc/prometheus-user-workload 9090
+# In the Prometheus UI's Targets page, your endpoint should now be UP.
+```
+
+### 4. PodMonitor as a lighter alternative
+
+If you don't want a Service (e.g. a Job that should be scraped while it runs), declare a `PodMonitor` on the pod label instead:
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: module-06-production
+  namespace: rag-prod
+spec:
+  selector:
+    matchLabels:
+      app: module-06-production
+  podMetricsEndpoints:
+    - port: metrics
+      path: /actuator/prometheus
+      interval: 30s
+```
+
+### Notes
+
+- The Prometheus instance scraping your endpoints is `prometheus-user-workload`, not the cluster `prometheus-k8s`. Grafana / dashboards must be pointed at the user-workload Prometheus datasource (`Thanos Querier`'s "user" tenant works too) — see the OpenShift docs for [Querying metrics for user-defined projects](https://docs.openshift.com/container-platform/latest/observability/monitoring/accessing-third-party-monitoring-apis.html).
+- If you've also installed the [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator) on vanilla Kubernetes, the same `ServiceMonitor`/`PodMonitor` manifests apply unchanged — that's the upstream API OpenShift adopted.
+- The starter Grafana dashboard shipped under `docker/grafana/dashboards/rag-dashboard.json` queries the same metric names (`rag_response_time_seconds`, `rag_queries_total`, `rag_tokens_used`), so once the user-workload Prometheus is wired into Grafana, you can import the dashboard as-is.
 
 ---
 

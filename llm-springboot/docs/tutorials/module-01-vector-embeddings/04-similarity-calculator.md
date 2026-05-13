@@ -241,7 +241,7 @@ Now it's your turn! Apply what you've learned with this hands-on exercise:
 
 **Hints**:
 - Cosine similarity of orthogonal vectors is always 0
-- Euclidean distance between unit vectors depends on angle: `distance = √(2 - 2×cosine)`
+- Euclidean distance between unit vectors depends on angle: `distance = √(2 - 2×cosine)` — note this identity **only** holds when both vectors are unit-length (‖v‖ = 1). AllMiniLM-L6-v2 returns normalized embeddings, so it applies here; if you ever swap in a model that doesn't normalize, divide each vector by its L2 norm first or this shortcut produces wrong distances.
 - Real embeddings are 384-dim, but the math is the same as 3-dim
 - Use `assertThat(value).isCloseTo(expected, within(0.01))` for floating-point comparisons
 

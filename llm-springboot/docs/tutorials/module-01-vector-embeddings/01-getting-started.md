@@ -18,7 +18,7 @@ Before you begin, ensure you have the following installed:
 
 ```bash
 git clone <repository-url>
-cd llm-springboot-workshop/src/module-01-vectors-embeddings
+cd llm-springboot-workshop/src/module-01-vector-embeddings
 ```
 
 2. **Verify project structure**:
@@ -32,7 +32,7 @@ ls -la
 
 This module uses **Maven** as the build tool. The `pom.xml` file defines all dependencies, including:
 
-- **Spring Boot 3.x** - Web framework and REST API support
+- **Spring Boot 4.0** - Web framework and REST API support
 - **LangChain4J** - AI integration library for embeddings
 - **AllMiniLM-L6-v2** - Local embedding model (no API keys needed!)
 
@@ -53,7 +53,7 @@ This command:
 - Runs tests
 - Packages the application as a JAR file
 
-**Expected output**: `BUILD SUCCESS` and a JAR file in `target/module-01-vectors-embeddings-1.0.0-SNAPSHOT.jar`
+**Expected output**: `BUILD SUCCESS` and a JAR file in `target/module-01-vector-embeddings-1.0.0-SNAPSHOT.jar`
 
 ## Configuration
 
@@ -65,7 +65,7 @@ The application uses Spring Boot's configuration system. All settings are in `sr
 ```yaml
 spring:
   application:
-    name: module-01-vectors-embeddings
+    name: module-01-vector-embeddings
 ```
 
 That's it! The simplicity is intentional—the embedding model is configured via Java code (`EmbeddingConfiguration.java`), and there are **no API keys or environment variables required** because we're using a local embedding model.
@@ -96,7 +96,7 @@ mvn spring-boot:run
 
 2. **Option B: Using the JAR**:
 ```bash
-java -jar target/module-01-vectors-embeddings-1.0.0-SNAPSHOT.jar
+java -jar target/module-01-vector-embeddings-1.0.0-SNAPSHOT.jar
 ```
 
 3. **Watch the startup logs**:
@@ -106,7 +106,7 @@ Loaded 3 documents
 Indexed 18 segments using RECURSIVE strategy
 Indexed 12 segments using PARAGRAPH strategy
 Vector index initialization completed in 2847ms
-Started Module01VectorsEmbeddingsApplication in 3.2 seconds
+Started Module01VectorEmbeddingsApplication in 3.2 seconds
 ```
 
 The application runs on **http://localhost:8080** by default.
@@ -197,12 +197,16 @@ java -version
 
 Update `JAVA_HOME` if needed:
 ```bash
-export JAVA_HOME=/path/to/java17
+export JAVA_HOME=/path/to/java25
 ```
 
-### Issue: "Embedding model download fails"
+### Issue: "Embedding model not found"
 
-**Solution**: Check internet connection (required for first-time model download). The model is cached in `~/.cache/langchain4j/` after the first successful download.
+**Solution**: There is no runtime model download. The `AllMiniLM-L6-v2` ONNX model and its tokenizer are bundled inside the `langchain4j-embeddings-all-minilm-l6-v2` JAR pulled from Maven Central — once Maven resolves the dependency, the model is already on the classpath. If the model fails to load:
+
+- Make sure your `~/.m2/repository/dev/langchain4j/langchain4j-embeddings-all-minilm-l6-v2/<version>/` directory contains a non-empty JAR (re-run `mvn -U dependency:resolve` if it's missing).
+- There is **no** `~/.cache/langchain4j/` directory in play — that path was incorrect in earlier drafts.
+- If you switched LangChain4J versions, run `mvn clean` so an old transitive JAR isn't picked up.
 
 ### Issue: "No documents found at classpath:data/*.md"
 

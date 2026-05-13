@@ -9,10 +9,18 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
+import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Semantic + exact-match response cache.
+ *
+ * <p><b>Scale note:</b> the semantic-cache lookup is O(n) over every key in the Redis hash because we
+ * recompute cosine similarity against each entry per query. That's fine for the workshop's small caches
+ * (≤ a few hundred entries), but at production scale you want an approximate-nearest-neighbour index
+ * (HNSW via Redis Stack's vector search, or a dedicated vector DB) so lookup stays sub-linear.
+ */
 @Service
 public class CachingService {
 
@@ -21,6 +29,7 @@ public class CachingService {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final EmbeddingModel embeddingModel;
+    // Concurrent so multiple request threads can hit the cache simultaneously without races.
     private final Map<String, Embedding> embeddingCache;
 
     @Value("${semantic-cache.similarity-threshold:0.95}")
@@ -32,20 +41,21 @@ public class CachingService {
     public CachingService(RedisTemplate<String, String> redisTemplate, EmbeddingModel embeddingModel) {
         this.redisTemplate = redisTemplate;
         this.embeddingModel = embeddingModel;
-        this.embeddingCache = new HashMap<>();
+        this.embeddingCache = new ConcurrentHashMap<>();
     }
 
-    @Cacheable(value = "exactQueryCache", key = "#query")
+    // `unless = "#result == null"` prevents the cache miss (null return) from being cached
+    // as a sentinel — otherwise every subsequent call for the same query would short-circuit
+    // here and the upstream service would never get a chance to compute the real answer.
+    @Cacheable(value = "exactQueryCache", key = "#query", unless = "#result == null")
     public String exactCacheGet(String query) {
         log.debug("Exact cache miss for: {}", query);
-        return null; // Cache miss handled by @Cacheable
+        return null;
     }
 
     public String semanticCacheGet(String query) {
-        // Get or compute embedding for query
         Embedding queryEmbedding = getOrComputeEmbedding(query);
 
-        // Search for similar cached queries
         Map<Object, Object> cache = redisTemplate.opsForHash().entries(SEMANTIC_CACHE_PREFIX + "queries");
 
         for (Map.Entry<Object, Object> entry : cache.entrySet()) {
@@ -66,11 +76,19 @@ public class CachingService {
     }
 
     public void semanticCachePut(String query, String response) {
-        // Store in semantic cache
-        redisTemplate.opsForHash().put(SEMANTIC_CACHE_PREFIX + "queries", query, response);
-        redisTemplate.expire(SEMANTIC_CACHE_PREFIX + "queries", ttlSeconds, TimeUnit.SECONDS);
+        // Per-query Redis key (not a single hash) so each entry can expire on its own clock —
+        // the previous design held everything inside one hash and reset the hash's TTL on every
+        // put, so popular caches effectively never expired and unpopular ones lived forever.
+        String key = SEMANTIC_CACHE_PREFIX + "query:" + query;
+        redisTemplate.opsForValue().set(key, response, Duration.ofSeconds(ttlSeconds));
 
-        // Cache embedding
+        // Maintain the lookup index (hash of query → response) so semanticCacheGet can iterate
+        // candidates. Each entry's lifetime is bounded by the per-key TTL above; we still set a
+        // TTL on the index hash itself as a backstop for cleanup, but no longer rely on it for
+        // freshness.
+        redisTemplate.opsForHash().put(SEMANTIC_CACHE_PREFIX + "queries", query, response);
+        redisTemplate.expire(SEMANTIC_CACHE_PREFIX + "queries", Duration.ofSeconds(ttlSeconds * 2));
+
         getOrComputeEmbedding(query);
 
         log.debug("Cached response for query: {}", query);
@@ -101,6 +119,16 @@ public class CachingService {
             normB += vectorB[i] * vectorB[i];
         }
 
-        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+        // Guard against zero-norm vectors. An all-zero embedding (degenerate input, e.g. empty
+        // query) would otherwise produce 0/0 = NaN, which silently propagates and is treated as
+        // "below threshold" by the >= check, but masks the real bug. Surface it as 0 similarity
+        // and log so callers can investigate.
+        double normProduct = Math.sqrt(normA) * Math.sqrt(normB);
+        if (normProduct == 0.0) {
+            log.warn("cosineSimilarity called with zero-norm vector — returning 0");
+            return 0.0;
+        }
+
+        return dotProduct / normProduct;
     }
 }

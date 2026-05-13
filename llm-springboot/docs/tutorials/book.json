@@ -7,7 +7,15 @@
   "plugins": [
     "mermaid-hybrid"
   ],
-  "pluginsConfig": {},
+  "pluginsConfig": {
+    "mermaid-hybrid": {
+      "theme": "default",
+      "useInlineSvgStyles": true,
+      "mermaid": {
+        "themeCSS": ".node rect { fill: #f9f9f9; stroke: #333; } .edgeLabel { background-color: white; }"
+      }
+    }
+  },
   "variables": {
     "workshop": "LLM Applications with Spring Boot",
     "modules": "6 Modules",

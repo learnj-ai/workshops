@@ -4,8 +4,8 @@ This quick start guide helps you get the module running in 5 minutes.
 
 ## Prerequisites
 
-- Java 25
-- Maven 3.6+
+- Java 25 (workshop uses `--enable-preview`)
+- Maven 3.9+
 - Docker and Docker Compose
 - OpenAI API key
 
@@ -47,7 +47,7 @@ The application will start on `http://localhost:8084`
 curl -X POST http://localhost:8084/api/v1/agent/execute \
   -H "Content-Type: application/json" \
   -d '{
-    "message": "What subscription plan is customer 12345 on?",
+    "message": "What subscription plan is customer CUST001 on?",
     "mode": "react"
   }'
 ```
@@ -81,7 +81,7 @@ curl -X POST http://localhost:8084/api/v1/agent/execute \
 curl -X POST http://localhost:8084/api/v1/agent/execute \
   -H "Content-Type: application/json" \
   -d '{
-    "message": "Tell me about customer 12345",
+    "message": "Tell me about customer CUST001",
     "mode": "react"
   }'
 
@@ -122,13 +122,16 @@ npx honkit serve
 The module includes sample customers and support tickets:
 
 **Customers:**
-- 12345: John Doe, Premium plan
-- 67890: Jane Smith, Basic plan
+- `CUST001`: Alice Johnson, premium
+- `CUST002`: Bob Smith, standard
+- `CUST003`: Carol White, premium
+- `CUST004`: David Brown, basic
 
 **Support Tickets:**
-- Open tickets for login issues
-- Pending tickets for feature requests
-- Closed tickets for resolved bugs
+- `TKT001` — CUST001, "Cannot access premium features" (open)
+- `TKT002` — CUST002, "Billing question" (pending)
+- `TKT003` — CUST003, "Feature request: Dark mode" (open)
+- `TKT004` — CUST001, "Integration help needed" (closed)
 
 ## Architecture Overview
 

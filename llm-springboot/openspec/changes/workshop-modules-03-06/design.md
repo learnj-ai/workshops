@@ -3,7 +3,7 @@
 Modules 01 (Vectors & Embeddings) and 02 (Advanced RAG) are complete, providing foundational vector search and hybrid retrieval capabilities. The workshop now requires production-grade features that enterprise developers need to deploy AI systems: tool integration with databases/APIs, autonomous agents with memory, security guardrails, and production deployment infrastructure.
 
 Current state:
-- Two independent Maven modules (`module-01-vectors-embeddings`, `module-02-advanced-rag`)
+- Two independent Maven modules (`module-01-vector-embeddings`, `module-02-advanced-rag`)
 - Each module is self-contained with copied dependencies (no cross-module references)
 - In-memory vector store in Module 01, ChromaDB deferred to Module 02 (per ADR-010)
 - Spring Boot 4.0.5, Java 25, Langchain4J 1.11 (per ADR-011)

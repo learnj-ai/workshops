@@ -160,39 +160,59 @@ For production, properly serialize ChatMessage objects:
 ```java
 @Component
 public class RedisChatMemoryStore implements ChatMemoryStore {
-    private final RedisTemplate<String, String> redisTemplate;
-    private final ObjectMapper objectMapper;
+
+    private static final String MEMORY_KEY_PREFIX = "chat:memory:";
+    private static final long TTL_HOURS = 24;
+
+    private final StringRedisTemplate redisTemplate;
+
+    public RedisChatMemoryStore(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     @Override
     public List<ChatMessage> getMessages(Object memoryId) {
         String key = MEMORY_KEY_PREFIX + memoryId;
         String json = redisTemplate.opsForValue().get(key);
-
-        if (json == null) {
-            return new ArrayList<>();
+        if (json == null || json.isEmpty()) {
+            return List.of();
         }
-
-        try {
-            return objectMapper.readValue(json, new TypeReference<List<ChatMessage>>() {});
-        } catch (JsonProcessingException e) {
-            log.error("Error deserializing messages", e);
-            return new ArrayList<>();
-        }
+        // ChatMessage is a sealed hierarchy (User/Ai/System/ToolExecutionResult).
+        // Plain Jackson with `new TypeReference<List<ChatMessage>>() {}` cannot
+        // round-trip it — there is no `@JsonTypeInfo` resolver on the interface,
+        // so Jackson throws InvalidTypeIdException on read. Use LangChain4J's
+        // built-in codec, which knows the discriminator.
+        return ChatMessageDeserializer.messagesFromJson(json);
     }
 
     @Override
     public void updateMessages(Object memoryId, List<ChatMessage> messages) {
         String key = MEMORY_KEY_PREFIX + memoryId;
-
-        try {
-            String json = objectMapper.writeValueAsString(messages);
-            redisTemplate.opsForValue().set(key, json, Duration.ofHours(TTL_HOURS));
-        } catch (JsonProcessingException e) {
-            log.error("Error serializing messages", e);
+        if (messages == null || messages.isEmpty()) {
+            redisTemplate.delete(key);
+            return;
         }
+        String json = ChatMessageSerializer.messagesToJson(messages);
+        redisTemplate.opsForValue().set(key, json, Duration.ofHours(TTL_HOURS));
+    }
+
+    @Override
+    public void deleteMessages(Object memoryId) {
+        redisTemplate.delete(MEMORY_KEY_PREFIX + memoryId);
     }
 }
 ```
+
+> **Why not Jackson directly?** A common first attempt is
+> `objectMapper.readValue(json, new TypeReference<List<ChatMessage>>() {})`. That
+> snippet looks reasonable but fails at runtime: `ChatMessage` is a sealed
+> interface with no `@JsonTypeInfo` / `@JsonSubTypes` resolver, so Jackson can't
+> reconstruct which subclass (`UserMessage`, `AiMessage`, …) to instantiate. If
+> you need a Jackson-only path (e.g. to keep your serialization stack
+> homogeneous), register a polymorphic resolver — but unless you have a reason
+> not to, `ChatMessageSerializer` / `ChatMessageDeserializer` from LangChain4J
+> are the right tools: they're maintained alongside the message types and stay
+> in sync when new subclasses are added.
 
 ### 3. ConversationMemoryService
 
@@ -526,48 +546,125 @@ public class SessionCleanupService {
 
 ## Context-Aware Agent Implementation
 
-Modify ReActAgent to use conversation history:
+We want the existing ReAct loop (Thought → Action → Observation) to *also*
+carry conversation history from prior turns. The naive version below is what
+not to do — it concatenates history into a single one-shot prompt and **loses
+the ReAct loop entirely** (no iterations, no tool calls):
+
+```java
+// ❌ Not actually ReAct — just a context-stuffed single call.
+public String solve(String question, String sessionId) {
+    String context = buildContext(memoryService.getHistory(sessionId));
+    return chatModel.chat("""
+        Previous conversation:
+        %s
+
+        Current question: %s
+        """.formatted(context, question));
+}
+```
+
+There are two correct ways to compose memory + ReAct. Pick the one that fits
+your stack.
+
+### Option A — Reuse `ReActAgent`, inject history into the ReAct prompt
+
+Keep the iterative loop from chapter 02 and feed the conversation history into
+the same prompt template (alongside the running thought/action/observation
+history). The agent keeps its full reasoning chain *and* sees prior turns.
 
 ```java
 @Service
 public class ContextAwareReActAgent {
-    private final ChatModel chatModel;
+
+    private final ReActAgent reActAgent;                    // from chapter 02
     private final ConversationMemoryService memoryService;
 
-    public String solve(String question, String sessionId) {
-        // Get conversation history
-        List<ChatMessage> history = memoryService.getHistory(sessionId);
-
-        // Build context from history
-        String context = buildContext(history);
-
-        // Enhanced prompt with context
-        String promptWithContext = String.format("""
-            Previous conversation:
-            %s
-
-            Current question: %s
-
-            Use the conversation history to provide context-aware responses.
-            """, context, question);
-
-        return chatModel.chat(promptWithContext);
+    public ContextAwareReActAgent(ReActAgent reActAgent,
+                                  ConversationMemoryService memoryService) {
+        this.reActAgent = reActAgent;
+        this.memoryService = memoryService;
     }
 
-    private String buildContext(List<ChatMessage> history) {
+    public String solve(String question, String sessionId) {
+        String prior = renderHistory(memoryService.getHistory(sessionId));
+
+        // ReActAgent's prompt template is REACT_PROMPT with a {history}
+        // placeholder for the per-iteration thought/action/observation log.
+        // We prepend the prior-turn transcript so the model sees both.
+        String questionWithMemory = """
+                Previous conversation (prior user/assistant turns):
+                %s
+
+                Current user question:
+                %s
+                """.formatted(prior, question);
+
+        String answer = reActAgent.solve(questionWithMemory);   // full ReAct loop runs
+        memoryService.addMessage(sessionId, question);
+        memoryService.addAiMessage(sessionId, answer);
+        return answer;
+    }
+
+    private String renderHistory(List<ChatMessage> history) {
         return history.stream()
-            .map(msg -> {
-                if (msg instanceof UserMessage) {
-                    return "User: " + msg.text();
-                } else if (msg instanceof AiMessage) {
-                    return "Assistant: " + msg.text();
-                }
-                return "";
-            })
-            .collect(Collectors.joining("\n"));
+                .map(m -> switch (m) {
+                    case UserMessage u -> "User: "      + u.singleText();
+                    case AiMessage   a -> "Assistant: " + a.text();
+                    default            -> "";
+                })
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.joining("\n"));
     }
 }
 ```
+
+The ReAct loop is unchanged — `ReActAgent.solve(...)` still iterates Thought →
+Action → Observation up to `max-iterations` and dispatches tools — we just
+gave it more context.
+
+### Option B — Use LangChain4J `AiServices` with `ChatMemory`
+
+If you're willing to migrate off the hand-rolled loop, LangChain4J's
+`AiServices` builder accepts both a `@Tool`-annotated tool box and a
+`ChatMemory` per session. The framework handles the loop, tool dispatch, and
+memory threading for you:
+
+```java
+public interface SupportAgent {
+    @SystemMessage("""
+            You are a customer-support agent. Use tools to look up customer
+            and ticket data. Think step-by-step before answering.
+            """)
+    String chat(@MemoryId String sessionId, @UserMessage String question);
+}
+
+@Bean
+SupportAgent supportAgent(ChatModel chatModel,
+                          RedisChatMemoryStore memoryStore,
+                          CustomerDataTool customerDataTool,
+                          WeatherTool weatherTool) {
+    return AiServices.builder(SupportAgent.class)
+            .chatModel(chatModel)
+            .chatMemoryProvider(sessionId ->
+                MessageWindowChatMemory.builder()
+                    .id(sessionId)
+                    .maxMessages(20)
+                    .chatMemoryStore(memoryStore)        // our Redis store
+                    .build())
+            .tools(customerDataTool, weatherTool)        // @Tool-annotated methods
+            .build();
+}
+```
+
+`@MemoryId` ties the `ChatMemory` to the session key, so each request loads
+the prior turns from Redis automatically. Tool calls come back as structured
+JSON (no regex parser), and the model still does its reasoning step-by-step —
+you just delegate the loop bookkeeping to the framework.
+
+**When to pick which.** Option A is what to use if you want students to *see*
+the Thought/Action/Observation loop. Option B is what you'd ship: less code,
+structured tool calls, memory wired in once.
 
 ## Testing Conversation Memory
 
