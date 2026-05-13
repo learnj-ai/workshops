@@ -545,6 +545,69 @@ Audit logging adds latency:
 - JSON serialization: ~0.5-2ms
 - Use async logging for high-throughput: `@Async`
 
+### Production Hardening: Don't Stop at Redis
+
+The workshop wires `SecurityAuditService` directly to a Redis list with default
+auth and no TLS. That is fine for the demo cluster you spin up on `localhost`,
+and dangerous in production for three reasons:
+
+1. **Redis defaults are permissive.** A vanilla Redis listens on `0.0.0.0` with
+   no auth. Anyone on the network — including a misconfigured pod in the same
+   namespace — can `LRANGE security-events 0 -1` and exfiltrate the audit trail.
+   Worse, they can `LTRIM security-events 0 0` and erase evidence of an attack
+   that just happened.
+2. **The store is mutable.** A compromised app instance with Redis credentials
+   can delete or rewrite events. Auditors expect *append-only*.
+3. **The store is volatile.** Redis lists are bounded by the configured cap
+   (`maxEvents`) and by RAM. Old events fall off the end. That's the wrong
+   retention model for a compliance log.
+
+A production-grade pipeline looks more like:
+
+```
+Application ── SecurityAuditService ──► Redis (hot tier, low-latency reads)
+                                       │
+                                       └──► Async sink to immutable cold store
+                                            (ELK / Splunk / Loki / S3 Object Lock)
+```
+
+Concrete hardening to apply, in order of payoff:
+
+- **Restrict access to Redis.** Set `requirepass`, then move to per-user ACLs
+  (Redis 6+):
+  ```
+  ACL SETUSER audit-writer on >$STRONG_PASSWORD ~security-events:* +lpush +ltrim +incr -@dangerous
+  ACL SETUSER audit-reader on >$READ_PASSWORD  ~security-events:* +lrange +llen        -@dangerous
+  ```
+  Your app uses `audit-writer`; humans investigating an incident use
+  `audit-reader`. Neither can `FLUSHDB` or `DEL` the audit keys.
+- **Require TLS** between the app and Redis (`spring.data.redis.ssl.enabled=true`,
+  Redis launched with `--tls-port 6379 --tls-cert-file ... --tls-key-file ...`).
+  Audit events contain user IDs and partial query text; they shouldn't traverse
+  the cluster network in plaintext.
+- **Ship to an immutable sink.** Treat Redis as the hot tier and asynchronously
+  forward every event to a write-once store:
+  - **ELK / Loki** — index for fast search, retention policy on the index.
+  - **Splunk** — same shape, plus built-in immutable buckets.
+  - **S3 with Object Lock** (Compliance mode) — cheapest long-term archive,
+    legally provable as tamper-resistant for compliance frameworks (SOC 2,
+    HIPAA's audit-trail requirement, PCI DSS 10.5.5).
+  Forwarding can be as light as a Logback `AppenderBase` that writes to both,
+  or as heavy as a sidecar that tails Redis and ships to Kafka → S3.
+- **Verify integrity periodically.** If you can hash each event and chain
+  hashes (`h_n = SHA256(h_{n-1} || event_n)`), a missing or rewritten event
+  breaks the chain — a cheap form of tamper-evidence that doesn't require a
+  full immutable store.
+- **Separate read-and-investigate from write-and-audit.** The app instance
+  *writes* audit events; the investigator's tooling *reads* them. They should
+  use different credentials, different ACLs, and ideally different network
+  paths.
+
+What you should **not** do: rely on `appendonly yes` (RDB/AOF persistence) as
+your "tamper-resistant store". AOF survives restarts but anyone with `DEL`
+permission can wipe both the in-memory copy and the on-disk log together.
+Persistence is durability, not immutability.
+
 ## Integration with Security Pipeline
 
 Audit logging is integrated throughout the security pipeline:

@@ -20,8 +20,8 @@
     "RAG Security"
   ],
   "technologies": [
-    "Java 17+",
-    "Spring Boot 3.x",
+    "Java 25+",
+    "Spring Boot 4.0",
     "LangChain4j 1.11.0",
     "Redis",
     "OpenAI API",
@@ -48,8 +48,8 @@
   ],
   "prerequisites": {
     "required": [
-      "Java 17+",
-      "Maven 3.6+",
+      "Java 25+",
+      "Maven 3.9+",
       "Docker",
       "OpenAI API Key",
       "Java IDE"

@@ -76,6 +76,20 @@ pre code {
   height: auto;
 }
 
+/*
+ * mermaid-hybrid renders diagrams to SVG at build time but historically emits
+ * a top-level <style> block inside each generated SVG. Some HonKit themes treat
+ * that <style> as page-global CSS, which then leaks Mermaid's variables (node
+ * fills, edge strokes, default fonts) onto the surrounding chapter text.
+ *
+ * Hide any such <style> blocks that escape the SVG sandbox. Real diagram styling
+ * should ride along inside the SVG's own <defs>, scoped by .mermaid above.
+ */
+.book .book-body .page-wrapper .page-inner section.normal > style,
+.book .book-body .page-wrapper .page-inner section.normal style[data-mermaid] {
+  display: none;
+}
+
 /* ============================================
    Blockquotes & Callouts
    ============================================ */

@@ -554,11 +554,16 @@ jobs:
         distribution: 'temurin'
         java-version: '25'
 
+    # Module 05 builds on Spring Boot 4 + JEP 505 (StructuredTaskScope) preview,
+    # so every forked test JVM needs --enable-preview. The workshop's parent pom
+    # already wires this into maven-compiler-plugin and maven-surefire-plugin,
+    # but failsafe (integration tests) reads ${argLine} from -DargLine=... so we
+    # pass it on the CLI to cover both unit and integration runs.
     - name: Run unit tests
-      run: mvn test
+      run: mvn test -DargLine="--enable-preview"
 
     - name: Run integration tests
-      run: mvn verify
+      run: mvn verify -DargLine="--enable-preview"
 
     - name: Security scan
       run: mvn dependency-check:check

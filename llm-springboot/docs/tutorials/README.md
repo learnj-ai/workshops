@@ -128,7 +128,34 @@ graph TB
     Agent -.-> Tracing
     Generation -.-> Metrics
     Generation -.-> Eval
+
+    classDef impl       fill:#d4edda,stroke:#28a745,stroke-width:1px,color:#0b4a1c;
+    classDef reference  fill:#fff3cd,stroke:#856404,stroke-width:1px,color:#5a4400,stroke-dasharray:4 2;
+
+    class Client,Controller,Security,Agent,Memory,Query,Hybrid,Rerank,Generation,DB,API,Vector,Cache,Postgres,Tracing,Metrics,Eval impl
+    class Orchestrator,MCP reference
 ```
+
+**Legend.** Solid green nodes are **implemented in the workshop** — you can
+run them locally, point requests at them, and inspect the source under
+`src/module-0X-*/`. Dashed amber nodes are **production-reference patterns**
+that the workshop discusses and prototypes but does not ship as runnable
+end-to-end systems:
+
+- **Multi-Agent Orchestrator** — Module 04 introduces the routing pattern and
+  builds toward it (`ReActAgent`, `ConversationMemoryService`, a domain-agent
+  scaffold), but the production-grade orchestrator that fans out across
+  specialised agents and merges results is a chapter walkthrough, not a
+  shipped service.
+- **MCP Server** — Module 03 demonstrates LLM tool calling end-to-end via
+  LangChain4J `@Tool` integration, which is the *pattern* MCP standardizes.
+  An actual JSON-RPC MCP server (using `langchain4j-mcp` and an external
+  filesystem/database server process) is referenced as the production
+  evolution, not bundled.
+
+Treat the legend as a contract: solid nodes you can curl right now; dashed
+nodes you should expect to wire up against your own infrastructure when you
+take the patterns from this workshop to production.
 
 ## Prerequisites
 

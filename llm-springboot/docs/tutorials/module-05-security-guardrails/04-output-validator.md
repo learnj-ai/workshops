@@ -497,6 +497,8 @@ try {
 
 This ensures that if the validator fails, the system errs on the side of caution.
 
+**What "error" actually covers:** the `catch` at `OutputValidator.java:81` is `Exception`, so it absorbs both transport-level failures (timeouts, HTTP errors from the judge model) **and** JSON parse failures when the judge returns malformed output (most commonly a missing or non-boolean `safe` field, which causes `JsonNode.get("safe").asBoolean()` to throw). In every case the call returns `ValidationCriteria(safe=false, …)` and the caller rejects the output — there is no fallback path that lets a malformed judge response through.
+
 ## Integration with Security Pipeline
 
 In `SecureRAGController`, validation happens in two phases:

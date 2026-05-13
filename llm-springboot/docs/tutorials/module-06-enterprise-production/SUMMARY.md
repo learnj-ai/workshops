@@ -9,4 +9,5 @@
 * [Metrics and Monitoring: Observability in Production](06-metrics-monitoring.md)
 * [Token Optimization: Reducing Costs and Latency](07-token-optimization.md)
 * [Kubernetes Deployment: Scaling to Production](08-kubernetes-deployment.md)
+* [Appendix: Migrating to pgvector](09-pgvector-migration.md)
 * [Conclusion](conclusion.md)

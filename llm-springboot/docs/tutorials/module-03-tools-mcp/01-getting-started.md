@@ -35,7 +35,7 @@ ls -la
 
 This module uses **Maven** as the build tool. The `pom.xml` file defines all dependencies:
 
-- **Spring Boot 3.x** - Web framework and REST API support
+- **Spring Boot 4.0** - Web framework and REST API support
 - **Spring Data JDBC** - Database access layer
 - **PostgreSQL Driver** - JDBC driver for PostgreSQL
 - **LangChain4J** - AI integration library with tool support
@@ -73,7 +73,7 @@ Run PostgreSQL in a Docker container:
 
 ```bash
 docker run --name workshop-postgres \
-  -e POSTGRES_DB=workshop_db \
+  -e POSTGRES_DB=workshop_module03 \
   -e POSTGRES_USER=workshop \
   -e POSTGRES_PASSWORD=workshop123 \
   -p 5432:5432 \
@@ -93,15 +93,15 @@ If you have PostgreSQL installed locally:
 1. **Create the database**:
 ```bash
 psql -U postgres
-CREATE DATABASE workshop_db;
+CREATE DATABASE workshop_module03;
 CREATE USER workshop WITH PASSWORD 'workshop123';
-GRANT ALL PRIVILEGES ON DATABASE workshop_db TO workshop;
+GRANT ALL PRIVILEGES ON DATABASE workshop_module03 TO workshop;
 \q
 ```
 
 2. **Verify connection**:
 ```bash
-psql -U workshop -d workshop_db -h localhost
+psql -U workshop -d workshop_module03 -h localhost
 ```
 
 ### Initialize Database Schema
@@ -114,14 +114,14 @@ The application automatically creates tables on startup using Spring Boot's sche
 To manually initialize (optional):
 
 ```bash
-psql -U workshop -d workshop_db -h localhost -f src/main/resources/db/schema.sql
-psql -U workshop -d workshop_db -h localhost -f src/main/resources/db/data.sql
+psql -U workshop -d workshop_module03 -h localhost -f src/main/resources/db/schema.sql
+psql -U workshop -d workshop_module03 -h localhost -f src/main/resources/db/data.sql
 ```
 
 Verify the data:
 
 ```bash
-psql -U workshop -d workshop_db -h localhost
+psql -U workshop -d workshop_module03 -h localhost
 SELECT * FROM customers;
 SELECT * FROM support_tickets;
 \q
@@ -131,7 +131,7 @@ You should see 5 customers and 10 support tickets.
 
 ## Configuration
 
-The application uses Spring Boot's configuration system. Settings are in `src/main/resources/application.properties`.
+The application uses Spring Boot's configuration system. Settings are in `src/main/resources/application.yml`.
 
 ### Environment Variables
 
@@ -145,25 +145,30 @@ Or set it directly in your IDE's run configuration.
 
 ### Application Configuration
 
-**application.properties** (key settings):
+**application.yml** (key settings):
 
-```properties
-# Application
-spring.application.name=module-03-tools-mcp
-server.port=8083
+```yaml
+spring:
+  application:
+    name: module-03-tools-mcp
+  datasource:
+    url: jdbc:postgresql://localhost:5432/workshop_module03
+    username: workshop
+    password: workshop123
 
-# PostgreSQL Database
-spring.datasource.url=jdbc:postgresql://localhost:5432/workshop_db
-spring.datasource.username=workshop
-spring.datasource.password=workshop123
+server:
+  port: 8083
 
-# OpenAI Configuration
-openai.api.key=${OPENAI_API_KEY:your-api-key-here}
-openai.model.name=gpt-4o-mini
+openai:
+  api:
+    key: ${OPENAI_API_KEY:your-api-key-here}
+  model:
+    name: gpt-4o-mini
 
-# Logging
-logging.level.com.techcorp.assistant=DEBUG
-logging.level.dev.langchain4j=DEBUG
+logging:
+  level:
+    com.techcorp.assistant: DEBUG
+    dev.langchain4j: DEBUG
 ```
 
 **Important**: The `openai.api.key` uses environment variable substitution. Set `OPENAI_API_KEY` in your environment or replace `${OPENAI_API_KEY:...}` directly with your key.
@@ -225,8 +230,7 @@ curl -X POST http://localhost:8083/api/v1/assistant/chat \
 **Expected response**:
 ```json
 {
-  "response": "The email address for customer 12345 (Alice Johnson) is alice.johnson@example.com. She is on the premium subscription plan.",
-  "toolsUsed": []
+  "response": "The email address for customer 12345 (Alice Johnson) is alice.johnson@example.com. She is on the premium subscription plan."
 }
 ```
 
@@ -250,8 +254,7 @@ curl -X POST http://localhost:8083/api/v1/assistant/chat \
 **Expected response**:
 ```json
 {
-  "response": "There are currently 4 open support tickets:\n\n1. Ticket #1 - Alice Johnson: Cannot access dashboard after login\n2. Ticket #4 - Bob Smith: API rate limit exceeded error\n3. Ticket #5 - Carol Martinez: Password reset not working\n4. Ticket #9 - Emma Wilson: Mobile app crashes on startup",
-  "toolsUsed": []
+  "response": "There are currently 4 open support tickets:\n\n1. Ticket #1 - Alice Johnson: Cannot access dashboard after login\n2. Ticket #4 - Bob Smith: API rate limit exceeded error\n3. Ticket #5 - Carol Martinez: Password reset not working\n4. Ticket #9 - Emma Wilson: Mobile app crashes on startup"
 }
 ```
 
@@ -270,8 +273,7 @@ curl -X POST http://localhost:8083/api/v1/assistant/chat \
 **Expected response**:
 ```json
 {
-  "response": "The current weather in Boston is partly cloudy with a temperature of 18°C (64°F). The humidity is at 65% with winds from the northeast at 12 km/h.",
-  "toolsUsed": []
+  "response": "The current weather in Boston is partly cloudy with a temperature of 18°C (64°F). The humidity is at 65% with winds from the northeast at 12 km/h."
 }
 ```
 

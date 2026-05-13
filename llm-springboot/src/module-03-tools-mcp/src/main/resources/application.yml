@@ -1,0 +1,27 @@
+# Module 03: Tools and MCP Configuration
+
+spring:
+  application:
+    name: module-03-tools-mcp
+  datasource:
+    url: jdbc:postgresql://localhost:5432/workshop_module03
+    username: workshop
+    password: workshop123
+    driver-class-name: org.postgresql.Driver
+  jdbc:
+    template:
+      query-timeout: 30
+
+server:
+  port: 8083
+
+openai:
+  api:
+    key: ${OPENAI_API_KEY:your-api-key-here}
+  model:
+    name: gpt-4o-mini
+
+logging:
+  level:
+    com.techcorp.assistant: DEBUG
+    dev.langchain4j: DEBUG

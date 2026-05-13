@@ -24,7 +24,7 @@ public class MetricsCollector {
 
         // Timer for response time
         this.responseTimer = Timer.builder("rag.response.time")
-                .description("RAG query response time in milliseconds")
+                .description("RAG query response time (Prometheus exports as `_seconds`)")
                 .tag("type", "rag")
                 .register(meterRegistry);
 

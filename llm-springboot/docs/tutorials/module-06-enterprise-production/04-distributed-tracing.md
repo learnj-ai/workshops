@@ -299,6 +299,55 @@ Jaeger provides:
 - **Search** - Find traces by attributes
 - **Statistics** - Latency percentiles, error rates
 
+### Production-Grade Exporter Pipeline
+
+The workshop's `TracingConfig` uses `SimpleSpanProcessor` + `LoggingSpanExporter` so traces show up in the console immediately — great for learning, but it serializes every span on the request thread and writes one trace per log line, which adds latency and floods logs in production.
+
+For real workloads, swap in a batching processor, an OTLP exporter pointed at your collector (Jaeger, Tempo, Honeycomb, etc.), and a parent-based ratio sampler so you keep all of a sampled trace but only some traces overall:
+
+```java
+@Bean
+public OpenTelemetry openTelemetry() {
+    Resource resource = Resource.getDefault()
+        .merge(Resource.create(Attributes.of(
+            ResourceAttributes.SERVICE_NAME, "module-06-production",
+            ResourceAttributes.SERVICE_VERSION, "1.0.0"
+        )));
+
+    SpanExporter otlpExporter = OtlpGrpcSpanExporter.builder()
+        .setEndpoint(System.getenv().getOrDefault("OTEL_EXPORTER_OTLP_ENDPOINT",
+                                                  "http://otel-collector:4317"))
+        .setTimeout(Duration.ofSeconds(2))
+        .build();
+
+    SpanProcessor batch = BatchSpanProcessor.builder(otlpExporter)
+        .setScheduleDelay(Duration.ofMillis(500))
+        .setMaxQueueSize(2048)
+        .setMaxExportBatchSize(512)
+        .build();
+
+    SdkTracerProvider tracerProvider = SdkTracerProvider.builder()
+        .addSpanProcessor(batch)
+        .setSampler(Sampler.parentBased(Sampler.traceIdRatioBased(0.1)))  // 10% head sample
+        .setResource(resource)
+        .build();
+
+    return OpenTelemetrySdk.builder()
+        .setTracerProvider(tracerProvider)
+        .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
+        .buildAndRegisterGlobal();
+}
+```
+
+Why each piece matters:
+
+- **`BatchSpanProcessor`** queues spans and flushes off-thread, so traced methods don't pay export latency. `SimpleSpanProcessor` (workshop default) exports inline and should never be used in production.
+- **`OtlpGrpcSpanExporter`** speaks the vendor-neutral OTLP protocol — point it at any collector (Jaeger, Tempo, Honeycomb, Datadog) without rewriting code.
+- **`Sampler.parentBased(traceIdRatioBased(0.1))`** keeps 10% of traces but honors the upstream sampling decision: if the calling service already decided to sample a trace, we'll sample our spans too, so distributed traces stay intact rather than turning into orphaned fragments.
+- **`W3CTraceContextPropagator`** is the standard `traceparent` header propagator — match what your other services use.
+
+Keep `SimpleSpanProcessor` + `LoggingSpanExporter` behind a profile (e.g. `@Profile("dev")`) so local development still sees traces in stdout while production runs the batch+OTLP pipeline.
+
 ## Tracing Best Practices
 
 ### 1. Name Spans Descriptively
@@ -429,7 +478,7 @@ public class CachingService {
 2. **Run a query and examine traces**:
 
 ```bash
-curl -X POST http://localhost:8086/api/v1/rag/query \
+curl -X POST http://localhost:8086/api/v1/production/query \
   -H "Content-Type: application/json" \
   -d '{"query": "What security features are available?"}'
 ```

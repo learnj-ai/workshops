@@ -2,6 +2,45 @@
 
 How do you know if your RAG system is production-ready? Traditional software testing gives us unit tests and integration tests, but LLM applications are probabilistic—the same input can produce different outputs. **Dokimos** solves this by providing a comprehensive evaluation framework that measures quality across multiple dimensions, from factual accuracy to response relevance.
 
+> ## Prerequisite — install Dokimos locally first
+>
+> The `dev.dokimos:dokimos-core / dokimos-spring-ai / dokimos-junit` JARs are
+> **not** published to Maven Central. Before you can build or run Module 06,
+> clone the framework and install it into your local Maven repository:
+>
+> ```bash
+> # Anywhere outside this workshop (e.g. ~/code/):
+> git clone https://github.com/learnj-ai/dokimos.git
+> cd dokimos
+> git checkout v0.14.2                # match the version pinned in module-06's pom
+> mvn -DskipTests install
+> ```
+>
+> This produces three artifacts under `~/.m2/repository/dev/dokimos/`:
+>
+> - `dokimos-core/0.14.2/`
+> - `dokimos-spring-ai/0.14.2/`
+> - `dokimos-junit/0.14.2/`
+>
+> Once those are present, `mvn install` on `module-06-enterprise-production`
+> will resolve them like any other Maven dependency. If you skip this step you
+> will hit `Could not find artifact dev.dokimos:dokimos-core:jar:0.14.2 in central`.
+>
+> **Why a local install instead of Maven Central?** Dokimos is an evolving
+> internal framework; the version pinned here (`0.14.2`) is what these chapters
+> were written against. Publishing to Central requires Sonatype namespace
+> verification + GPG signing per release, which is out of scope for the
+> workshop. If you fork the framework and want a hermetic local-only build,
+> drop the installed JARs into a `repo/` directory under this module and add a
+> `<repository><url>file:///${project.basedir}/repo</url></repository>` block
+> to `module-06-enterprise-production/pom.xml`. Either way works; the local-Maven
+> path above is the lightest setup.
+>
+> If the upstream repository is private and you don't have access, see "What if I
+> can't get Dokimos?" in `02-dokimos-evaluation.md` for fallback options
+> (replace with Spring AI's `EvaluationResult` interface or a hand-rolled
+> evaluator).
+
 ## What is Dokimos?
 
 **Dokimos** (Greek: "tested, proven") is an evaluation framework specifically designed for LLM applications. It provides:
@@ -512,6 +551,20 @@ curl -X POST http://localhost:8086/api/v1/eval/run \
 - This is a rule-based evaluator, so it's fast and deterministic
 
 ---
+
+## What if I can't get Dokimos?
+
+If you can't access the Dokimos source repo (private fork, network restrictions, license question), you can still complete Module 06 by swapping the evaluator interface for one of these:
+
+- **Spring AI evaluators.** Spring AI ships an `Evaluator` interface (`org.springframework.ai.evaluation.Evaluator`) and a `RelevancyEvaluator` / `FactCheckingEvaluator` pair built on its own chat-model abstraction. They cover faithfulness + relevance with comparable semantics to Dokimos's built-ins. The chapter signatures change (`@Bean RelevancyEvaluator` instead of `@Bean FaithfulnessEvaluator`), but the orchestration concepts (dataset → task → evaluator → result) port over.
+- **Hand-rolled minimal evaluator.** For a self-contained workshop, a 50-line interface plus three implementations (regex-based citation check, LLM-as-judge faithfulness, cosine-similarity relevance) reproduces the core ideas. The aggregation/reporting machinery (pass rate, CSV/HTML export) is an additional ~150 lines, or you can skip it and just print results.
+
+Either path keeps the *pedagogy* of Module 06 intact — the framework name changes; the lesson (systematic, repeatable quality assessment) does not. The Dokimos imports in the source tree are confined to:
+
+- `src/main/java/com/techcorp/assistant/module06/dokimos/` (the custom evaluator and config)
+- `src/test/java/com/techcorp/assistant/module06/evaluation/` (the JUnit integration)
+
+So the migration surface is small and contained.
 
 ## What's Next?
 

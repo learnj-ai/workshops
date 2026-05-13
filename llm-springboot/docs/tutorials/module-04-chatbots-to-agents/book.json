@@ -50,7 +50,7 @@
     "difficulty": "Advanced",
     "estimatedTime": "4-6 hours",
     "prerequisites": [
-      "Java 17+",
+      "Java 25+",
       "Spring Boot knowledge",
       "LangChain4j basics",
       "PostgreSQL",

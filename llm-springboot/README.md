@@ -25,7 +25,7 @@ A hands-on workshop that transforms developers into AI architects using Spring B
 
 ```bash
 export OPENAI_API_KEY=your-api-key-here
-export OPENAI_MODEL_NAME=gpt-4  # or gpt-3.5-turbo
+export OPENAI_MODEL_NAME=gpt-4o-mini
 ```
 
 ### 2. Start Infrastructure Services
@@ -209,7 +209,7 @@ llm-springboot/
 │   └── workshop-abstract.md       Workshop abstract and module overview
 │
 └── src/                           Source code (Maven modules)
-    ├── module-01-vectors-embeddings/
+    ├── module-01-vector-embeddings/
     ├── module-02-advanced-rag/
     ├── module-03-tools-mcp/
     ├── module-04-chatbots-to-agents/

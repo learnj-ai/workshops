@@ -4,14 +4,14 @@ import com.techcorp.assistant.chunking.ChunkingStrategy;
 import com.techcorp.assistant.store.IndexedSegment;
 import com.techcorp.assistant.store.VectorStoreService;
 import dev.langchain4j.data.segment.TextSegment;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -43,37 +43,50 @@ public class KeywordSearchService {
             return List.of();
         }
 
-        Set<String> queryTerms = tokenize(query);
+        Set<String> queryTerms = uniqueTokens(query);
         if (queryTerms.isEmpty()) {
             return List.of();
         }
 
-        double avgDocLength = allSegments.stream()
-                .mapToInt(seg -> tokenize(seg.segment().text()).size())
+        // Tokenize each segment exactly once per call. We need both:
+        //   - the full token list (for BM25 length normalization — total tokens, not unique)
+        //   - the unique-token set (for fast doc-frequency contains-checks)
+        // Doing this up-front turns the inner loops from O(segments × terms × tokenize)
+        // into O(segments × terms).
+        List<SegmentTokens> tokenized = new ArrayList<>(allSegments.size());
+        for (IndexedSegment indexed : allSegments) {
+            tokenized.add(SegmentTokens.of(indexed));
+        }
+
+        double avgDocLength = tokenized.stream()
+                .mapToInt(s -> s.allTokens.size())
                 .average()
                 .orElse(1.0);
 
-        int totalDocs = allSegments.size();
+        int totalDocs = tokenized.size();
 
-        // Precompute document frequencies for each query term
         Map<String, Integer> documentFrequencies = new HashMap<>();
         for (String term : queryTerms) {
-            int df = (int) allSegments.stream()
-                    .filter(seg -> tokenize(seg.segment().text()).contains(term))
-                    .count();
+            int df = 0;
+            for (SegmentTokens s : tokenized) {
+                if (s.uniqueTokens.contains(term)) {
+                    df++;
+                }
+            }
             documentFrequencies.put(term, df);
         }
 
         record ScoredSegment(TextSegment segment, double score) {}
 
-        return allSegments.stream()
-                .map(indexed -> {
-                    double score = computeBM25Score(
-                            indexed.segment().text(), queryTerms,
-                            documentFrequencies, totalDocs, avgDocLength);
-                    return new ScoredSegment(indexed.segment(), score);
-                })
-                .filter(scored -> scored.score() > 0)
+        List<ScoredSegment> scored = new ArrayList<>(tokenized.size());
+        for (SegmentTokens s : tokenized) {
+            double score = computeBM25Score(s, queryTerms, documentFrequencies, totalDocs, avgDocLength);
+            if (score > 0) {
+                scored.add(new ScoredSegment(s.indexed.segment(), score));
+            }
+        }
+
+        return scored.stream()
                 .sorted(Comparator.comparingDouble(ScoredSegment::score).reversed())
                 .limit(maxResults)
                 .map(ScoredSegment::segment)
@@ -81,15 +94,14 @@ public class KeywordSearchService {
     }
 
     private double computeBM25Score(
-            String documentText,
+            SegmentTokens segment,
             Set<String> queryTerms,
             Map<String, Integer> documentFrequencies,
             int totalDocs,
             double avgDocLength) {
 
-        Set<String> docTerms = tokenize(documentText);
-        int docLength = docTerms.size();
-        Map<String, Long> termFrequencies = countTermFrequencies(documentText);
+        int docLength = segment.allTokens.size();  // total tokens, not unique
+        Map<String, Long> termFrequencies = segment.termFrequencies;
 
         double score = 0.0;
         for (String term : queryTerms) {
@@ -112,15 +124,45 @@ public class KeywordSearchService {
         return score;
     }
 
-    private Map<String, Long> countTermFrequencies(String text) {
-        return Arrays.stream(text.toLowerCase().split("\\W+"))
-                .filter(t -> !t.isEmpty())
-                .collect(Collectors.groupingBy(t -> t, Collectors.counting()));
+    private static Set<String> uniqueTokens(String text) {
+        Set<String> set = new HashSet<>();
+        for (String token : text.toLowerCase().split("\\W+")) {
+            if (!token.isEmpty() && token.length() > 1) {
+                set.add(token);
+            }
+        }
+        return set;
     }
 
-    private Set<String> tokenize(String text) {
-        return Arrays.stream(text.toLowerCase().split("\\W+"))
-                .filter(t -> !t.isEmpty() && t.length() > 1)
-                .collect(Collectors.toSet());
+    private static List<String> tokensIn(String text) {
+        List<String> list = new ArrayList<>();
+        for (String token : text.toLowerCase().split("\\W+")) {
+            if (!token.isEmpty() && token.length() > 1) {
+                list.add(token);
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Per-segment tokenization computed once at search-call time.
+     * Holds both the full token list (for BM25 length normalization) and
+     * the unique-token set (for doc-frequency lookups).
+     */
+    private record SegmentTokens(
+            IndexedSegment indexed,
+            List<String> allTokens,
+            Set<String> uniqueTokens,
+            Map<String, Long> termFrequencies) {
+
+        static SegmentTokens of(IndexedSegment indexed) {
+            List<String> tokens = tokensIn(indexed.segment().text());
+            Set<String> unique = new HashSet<>(tokens);
+            Map<String, Long> tf = new HashMap<>();
+            for (String t : tokens) {
+                tf.merge(t, 1L, Long::sum);
+            }
+            return new SegmentTokens(indexed, tokens, unique, tf);
+        }
     }
 }

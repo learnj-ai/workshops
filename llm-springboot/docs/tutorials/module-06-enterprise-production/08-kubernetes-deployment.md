@@ -145,7 +145,7 @@ spec:
               cpu: "1000m"
           livenessProbe:
             httpGet:
-              path: /actuator/health
+              path: /actuator/health/liveness
               port: 8086
             initialDelaySeconds: 60
             periodSeconds: 10
@@ -178,7 +178,7 @@ spec:
 **Liveness probe**:
 - Checks if pod is healthy
 - Restarts pod if checks fail
-- Uses `/actuator/health` endpoint
+- Uses `/actuator/health/liveness` — Spring Boot's dedicated liveness group (since 2.3, enabled by default for K8s). Hitting the aggregate `/actuator/health` would couple "is this process alive?" to readiness-style checks (DB, Redis) and cause cascading restarts during dependency blips.
 
 **Readiness probe**:
 - Checks if pod is ready for traffic
@@ -324,7 +324,7 @@ curl http://localhost:8080/actuator/health
 ROUTE_URL=$(kubectl get route module-06-route -o jsonpath='{.spec.host}')
 
 # Test RAG query
-curl -X POST https://$ROUTE_URL/api/v1/rag/query \
+curl -X POST https://$ROUTE_URL/api/v1/production/query \
   -H "Content-Type: application/json" \
   -d '{"query": "What security features are available?"}'
 
