@@ -19,7 +19,7 @@ openai:
   api:
     key: ${OPENAI_API_KEY:your-api-key-here}
   model:
-    name: gpt-4o-mini
+    name: ${OPENAI_MODEL_NAME:gpt-4o-mini}
 
 logging:
   level:

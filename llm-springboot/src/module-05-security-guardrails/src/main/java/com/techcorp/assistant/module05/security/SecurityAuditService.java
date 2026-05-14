@@ -2,6 +2,7 @@ package com.techcorp.assistant.module05.security;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +30,10 @@ public class SecurityAuditService {
 
     public SecurityAuditService(RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;
-        this.objectMapper = new ObjectMapper();
+        // Register the JSR-310 module so `Instant` (used for `AuditEvent.timestamp`) serializes
+        // as an ISO-8601 string instead of throwing `InvalidDefinitionException` — without this,
+        // every audit write fails silently into the catch below and Redis never sees the events.
+        this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     public void logSecurityEvent(SecurityEvent event) {
