@@ -46,7 +46,7 @@ openai:
     key: ${OPENAI_API_KEY}
   model:
     name: ${OPENAI_MODEL_NAME:gpt-4o-mini}
-    embedding: text-embedding-3-small
+    embedding: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
 
 evaluation:
   dataset:
