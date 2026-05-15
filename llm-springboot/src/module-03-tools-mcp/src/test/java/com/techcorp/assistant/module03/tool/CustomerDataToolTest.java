@@ -20,9 +20,14 @@ class CustomerDataToolTest {
 
     @BeforeEach
     void setUp() {
-        // Create in-memory H2 database for testing
+        // Create in-memory H2 database for testing.
+        // `generateUniqueName(true)` gives every test a fresh DB; without it,
+        // EmbeddedDatabaseBuilder reuses the default "testdb" name across tests
+        // in the same JVM and the second test fails with
+        // "Table CUSTOMERS already exists".
         DataSource dataSource = new EmbeddedDatabaseBuilder()
                 .setType(EmbeddedDatabaseType.H2)
+                .generateUniqueName(true)
                 .addScript("classpath:test-schema.sql")
                 .addScript("classpath:test-data.sql")
                 .build();

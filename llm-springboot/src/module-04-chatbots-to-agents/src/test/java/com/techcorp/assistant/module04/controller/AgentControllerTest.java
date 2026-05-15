@@ -4,38 +4,53 @@ import com.techcorp.assistant.module04.agent.ReActAgent;
 import com.techcorp.assistant.module04.memory.ConversationMemoryService;
 import com.techcorp.assistant.module04.orchestrator.MultiAgentOrchestrator;
 import com.techcorp.assistant.module04.service.TaskDecomposer;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Controller tests for AgentController.
+ *
+ * <p>Spring Boot 4 removed {@code @WebMvcTest} and {@code @MockBean}; this test now
+ * uses {@link MockMvcBuilders#standaloneSetup} against a directly-instantiated
+ * controller wired with Mockito mocks. No Spring context is loaded.
  */
-@WebMvcTest(AgentController.class)
 class AgentControllerTest {
 
-    @Autowired
+    private ReActAgent reActAgent;
+    private MultiAgentOrchestrator multiAgentOrchestrator;
+    private TaskDecomposer taskDecomposer;
+    private ConversationMemoryService memoryService;
     private MockMvc mockMvc;
 
-    @MockBean
-    private ReActAgent reActAgent;
+    @BeforeEach
+    void setUp() {
+        reActAgent = mock(ReActAgent.class);
+        multiAgentOrchestrator = mock(MultiAgentOrchestrator.class);
+        taskDecomposer = mock(TaskDecomposer.class);
+        memoryService = mock(ConversationMemoryService.class);
+        // History defaults: getHistory returns an empty list so the controller's
+        // renderHistory path produces an empty prefix and the agent sees only the
+        // current user message.
+        when(memoryService.getHistory(anyString())).thenReturn(List.of());
 
-    @MockBean
-    private MultiAgentOrchestrator multiAgentOrchestrator;
-
-    @MockBean
-    private TaskDecomposer taskDecomposer;
-
-    @MockBean
-    private ConversationMemoryService memoryService;
+        AgentController controller = new AgentController(
+                reActAgent, multiAgentOrchestrator, taskDecomposer, memoryService);
+        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+    }
 
     @Test
     void testHealthEndpoint() throws Exception {
@@ -46,10 +61,8 @@ class AgentControllerTest {
 
     @Test
     void testExecuteEndpoint_ReActMode() throws Exception {
-        // Given
         when(reActAgent.solve(anyString())).thenReturn("Agent response");
 
-        // When/Then
         mockMvc.perform(post("/api/v1/agent/execute")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""

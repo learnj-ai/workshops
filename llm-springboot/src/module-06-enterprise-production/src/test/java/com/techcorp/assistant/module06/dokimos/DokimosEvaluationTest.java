@@ -4,6 +4,7 @@ import dev.dokimos.core.*;
 import dev.dokimos.junit.DatasetSource;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,9 +17,15 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * JUnit integration tests for Dokimos evaluation framework.
  * Demonstrates how to run evaluations as JUnit tests with threshold assertions.
+ *
+ * <p>These tests run real LLM-judge evaluations against OpenAI's chat API
+ * (faithfulness, hallucination, contextual relevance). They require both an
+ * {@code OPENAI_API_KEY} and a project that has access to the configured
+ * judge model. Gated on the env var so CI without an API key skips cleanly.
  */
 @SpringBootTest
 @DisplayName("Dokimos Evaluation Tests")
+@EnabledIfEnvironmentVariable(named = "OPENAI_API_KEY", matches = ".+")
 class DokimosEvaluationTest {
 
     @Autowired

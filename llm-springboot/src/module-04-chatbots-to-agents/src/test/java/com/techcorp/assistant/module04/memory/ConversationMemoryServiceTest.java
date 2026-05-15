@@ -4,6 +4,7 @@ import dev.langchain4j.memory.ChatMemory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -21,6 +22,10 @@ class ConversationMemoryServiceTest {
         StringRedisTemplate mockRedis = mock(StringRedisTemplate.class);
         mockStore = new RedisChatMemoryStore(mockRedis);
         memoryService = new ConversationMemoryService(mockStore);
+        // `maxMessages` is @Value-injected at runtime. Outside a Spring context
+        // the field stays at its Java default (0), which LangChain4J rejects
+        // with "maxMessages must be greater than zero". Set it explicitly.
+        ReflectionTestUtils.setField(memoryService, "maxMessages", 20);
     }
 
     @Test

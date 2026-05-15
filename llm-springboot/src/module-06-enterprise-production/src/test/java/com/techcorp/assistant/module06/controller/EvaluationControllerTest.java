@@ -40,7 +40,7 @@ class EvaluationControllerTest {
     void testRunEvaluationSuccess() throws Exception {
         // Create mock experiment result
         ExperimentResult mockResult = createMockExperimentResult();
-        when(evaluationService.runExperiment(anyList())).thenReturn(mockResult);
+        when(evaluationService.runExperiment(nullable(java.util.List.class))).thenReturn(mockResult);
 
         // Create request
         EvalRequest request = new EvalRequest("eval-golden-set", null);
@@ -62,7 +62,7 @@ class EvaluationControllerTest {
     void testRunEvaluationWithFilter() throws Exception {
         // Create mock experiment result
         ExperimentResult mockResult = createMockExperimentResult();
-        when(evaluationService.runExperiment(anyList())).thenReturn(mockResult);
+        when(evaluationService.runExperiment(nullable(java.util.List.class))).thenReturn(mockResult);
 
         // Create request with filter
         List<String> filter = List.of("faithfulness", "hallucination");
@@ -82,7 +82,7 @@ class EvaluationControllerTest {
     @DisplayName("Should return 404 when dataset not found")
     void testDatasetNotFound() throws Exception {
         // Mock dataset load exception
-        when(evaluationService.runExperiment(anyList()))
+        when(evaluationService.runExperiment(nullable(java.util.List.class)))
                 .thenThrow(new DatasetLoader.DatasetLoadException("Dataset not found"));
 
         // Create request
@@ -134,7 +134,7 @@ class EvaluationControllerTest {
     @DisplayName("Should return 500 for internal errors")
     void testInternalError() throws Exception {
         // Mock internal error
-        when(evaluationService.runExperiment(anyList()))
+        when(evaluationService.runExperiment(nullable(java.util.List.class)))
                 .thenThrow(new RuntimeException("Internal error"));
 
         // Create request
