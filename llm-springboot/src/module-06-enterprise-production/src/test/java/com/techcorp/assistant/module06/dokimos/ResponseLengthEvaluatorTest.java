@@ -3,7 +3,6 @@ package com.techcorp.assistant.module06.dokimos;
 import dev.dokimos.core.EvalResult;
 import dev.dokimos.core.EvalTestCase;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,155 +13,135 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit tests for ResponseLengthEvaluator.
  *
- * <p><b>Disabled:</b> these tests were written against an older Dokimos contract
- * where {@code ResponseLengthEvaluator} returned binary 1.0/0.0 scores. The
- * version pinned in this module (Dokimos 0.14.2) returns a fractional score
- * based on how close the response length is to the configured bounds (e.g.
- * an 87-character response with maxChars=1000 scores ~0.587), and the
- * {@code success()} flag reflects that scoring band rather than a hard
- * pass/fail. Updating the assertions requires verifying the current Dokimos
- * scoring algorithm against its source. Re-enable once the test cases are
- * reconciled with Dokimos 0.14.2 semantics, or after replacing the evaluator
- * with an in-tree implementation per the workshop's fallback path.
+ * <p>The evaluator scores fractionally: a response inside {@code [minChars, maxChars]}
+ * gets {@code 1 - |length - midpoint| / range} where midpoint is
+ * {@code (min + max) / 2} and range is {@code max - min}. So:
+ *
+ * <ul>
+ *   <li>Length exactly at midpoint → score 1.0</li>
+ *   <li>Length at either boundary → score 0.5</li>
+ *   <li>Length outside {@code [min, max]} → score 0.0 with a "too short" / "too long" reason</li>
+ * </ul>
+ *
+ * <p>{@code success()} compares the score against the evaluator's threshold, so a
+ * within-bounds response can still report {@code success=false} when the threshold
+ * is tighter than the boundary score.
  */
-@Disabled("Dokimos 0.14.2 changed ResponseLengthEvaluator from binary to fractional scoring; assertions need rewriting against the current scoring contract.")
 @DisplayName("ResponseLengthEvaluator Tests")
 class ResponseLengthEvaluatorTest {
+
+    private static final int MIN = 50;
+    private static final int MAX = 500;
+    private static final double THRESHOLD = 0.8;
+    private static final int IDEAL = (MIN + MAX) / 2;        // 275
+    private static final int RANGE = MAX - MIN;              // 450
 
     private ResponseLengthEvaluator evaluator;
 
     @BeforeEach
     void setUp() {
-        // Create evaluator with min=50, max=500, threshold=0.8
-        evaluator = new ResponseLengthEvaluator(50, 500, 0.8);
+        evaluator = new ResponseLengthEvaluator(MIN, MAX, THRESHOLD);
+    }
+
+    /** Score for an in-range length, per the evaluator's algorithm. */
+    private static double expectedScore(int length) {
+        double deviation = Math.abs(length - IDEAL);
+        return Math.max(0.0, 1.0 - (deviation / RANGE));
     }
 
     @Test
-    @DisplayName("Should pass for response within length bounds")
+    @DisplayName("Should score 1.0 for response exactly at midpoint length")
+    void testIdealLength() {
+        String response = "x".repeat(IDEAL);
+        EvalResult result = evaluator.runEvaluation(testCase(response));
+
+        assertEquals("response-length", result.name());
+        assertEquals(1.0, result.score(), 1e-9);
+        assertTrue(result.success(), "1.0 is above the 0.8 threshold");
+    }
+
+    @Test
+    @DisplayName("Should score fractionally for response within bounds, away from midpoint")
     void testResponseWithinBounds() {
-        // Create test case with response of valid length
         String response = "This is a valid response with appropriate length that falls within the configured bounds.";
-        EvalTestCase testCase = EvalTestCase.builder()
-                .actualOutputs(Map.of("output", response))
-                .build();
+        int length = response.length();
+        assertTrue(length >= MIN && length <= MAX, "precondition: length must be in-range");
 
-        // Evaluate
-        EvalResult result = evaluator.runEvaluation(testCase);
+        EvalResult result = evaluator.runEvaluation(testCase(response));
 
-        // Verify success
-        assertNotNull(result);
         assertEquals("response-length", result.name());
-        assertEquals(1.0, result.score());
-        assertTrue(result.success());
+        assertEquals(expectedScore(length), result.score(), 1e-9);
+        // Score for length 91 is ~0.591 < threshold 0.8, so success=false.
+        assertEquals(result.score() >= THRESHOLD, result.success());
     }
 
     @Test
-    @DisplayName("Should fail for response too short")
+    @DisplayName("Should fail for response shorter than the minimum")
     void testResponseTooShort() {
-        // Create test case with short response
-        String response = "Too short";
-        EvalTestCase testCase = EvalTestCase.builder()
-                .actualOutputs(Map.of("output", response))
-                .build();
+        EvalResult result = evaluator.runEvaluation(testCase("Too short"));
 
-        // Evaluate
-        EvalResult result = evaluator.runEvaluation(testCase);
-
-        // Verify failure
-        assertNotNull(result);
-        assertEquals("response-length", result.name());
-        assertEquals(0.0, result.score());
+        assertEquals(0.0, result.score(), 1e-9);
         assertFalse(result.success());
-        assertTrue(result.reason().contains("too short"));
+        assertTrue(result.reason().toLowerCase().contains("too short"),
+                "reason should mention 'too short', got: " + result.reason());
     }
 
     @Test
-    @DisplayName("Should fail for response too long")
+    @DisplayName("Should fail for response longer than the maximum")
     void testResponseTooLong() {
-        // Create test case with long response
-        String response = "x".repeat(600);  // 600 characters
-        EvalTestCase testCase = EvalTestCase.builder()
-                .actualOutputs(Map.of("output", response))
-                .build();
+        EvalResult result = evaluator.runEvaluation(testCase("x".repeat(600)));
 
-        // Evaluate
-        EvalResult result = evaluator.runEvaluation(testCase);
-
-        // Verify failure
-        assertNotNull(result);
-        assertEquals("response-length", result.name());
-        assertEquals(0.0, result.score());
+        assertEquals(0.0, result.score(), 1e-9);
         assertFalse(result.success());
-        assertTrue(result.reason().contains("too long"));
+        assertTrue(result.reason().toLowerCase().contains("too long"),
+                "reason should mention 'too long', got: " + result.reason());
     }
 
     @Test
-    @DisplayName("Should handle missing output field")
+    @DisplayName("Should fail with 'empty' reason when output field is missing")
     void testMissingOutput() {
-        // Create test case without output field
-        EvalTestCase testCase = EvalTestCase.builder()
-                .actualOutputs(Map.of())
-                .build();
+        EvalResult result = evaluator.runEvaluation(
+                EvalTestCase.builder().actualOutputs(Map.of()).build());
 
-        // Evaluate
-        EvalResult result = evaluator.runEvaluation(testCase);
-
-        // Verify failure with appropriate reason
-        assertNotNull(result);
-        assertEquals("response-length", result.name());
-        assertEquals(0.0, result.score());
+        assertEquals(0.0, result.score(), 1e-9);
         assertFalse(result.success());
-        assertTrue(result.reason().contains("missing") || result.reason().contains("null"));
+        // The evaluator routes both null and empty-string through the same branch,
+        // returning "Response is empty" — the test now anchors on that wording.
+        assertTrue(result.reason().toLowerCase().contains("empty"),
+                "reason should mention 'empty', got: " + result.reason());
     }
 
     @Test
-    @DisplayName("Should handle non-string output")
+    @DisplayName("Should fail for non-string output")
     void testNonStringOutput() {
-        // Create test case with non-string output
-        EvalTestCase testCase = EvalTestCase.builder()
-                .actualOutputs(Map.of("output", 12345))
-                .build();
+        EvalResult result = evaluator.runEvaluation(testCase(12345));
 
-        // Evaluate
-        EvalResult result = evaluator.runEvaluation(testCase);
-
-        // Verify failure with appropriate reason
-        assertNotNull(result);
-        assertEquals(0.0, result.score());
+        assertEquals(0.0, result.score(), 1e-9);
         assertFalse(result.success());
     }
 
     @Test
-    @DisplayName("Should accept response at minimum length boundary")
+    @DisplayName("Should score 0.5 at the minimum-length boundary (in-range but max deviation)")
     void testMinimumBoundary() {
-        // Create response exactly at minimum length (50 chars)
-        String response = "x".repeat(50);
-        EvalTestCase testCase = EvalTestCase.builder()
-                .actualOutputs(Map.of("output", response))
-                .build();
+        EvalResult result = evaluator.runEvaluation(testCase("x".repeat(MIN)));
 
-        // Evaluate
-        EvalResult result = evaluator.runEvaluation(testCase);
-
-        // Verify success
-        assertEquals(1.0, result.score());
-        assertTrue(result.success());
+        // Boundary length 50: deviation from midpoint 275 is 225, range is 450,
+        // so score = 1 - 225/450 = 0.5. Within bounds, but below the 0.8
+        // threshold, so success=false.
+        assertEquals(0.5, result.score(), 1e-9);
+        assertFalse(result.success(), "0.5 is below the 0.8 threshold");
     }
 
     @Test
-    @DisplayName("Should accept response at maximum length boundary")
+    @DisplayName("Should score 0.5 at the maximum-length boundary (in-range but max deviation)")
     void testMaximumBoundary() {
-        // Create response exactly at maximum length (500 chars)
-        String response = "x".repeat(500);
-        EvalTestCase testCase = EvalTestCase.builder()
-                .actualOutputs(Map.of("output", response))
-                .build();
+        EvalResult result = evaluator.runEvaluation(testCase("x".repeat(MAX)));
 
-        // Evaluate
-        EvalResult result = evaluator.runEvaluation(testCase);
+        assertEquals(0.5, result.score(), 1e-9);
+        assertFalse(result.success(), "0.5 is below the 0.8 threshold");
+    }
 
-        // Verify success
-        assertEquals(1.0, result.score());
-        assertTrue(result.success());
+    private static EvalTestCase testCase(Object output) {
+        return EvalTestCase.builder().actualOutputs(Map.of("output", output)).build();
     }
 }

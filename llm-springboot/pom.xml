@@ -24,6 +24,28 @@
         <langchain4j.version>1.11.0</langchain4j.version>
     </properties>
 
+    <!--
+        Vendored local Maven repo for artifacts not (yet) on Maven Central.
+        Dokimos 0.14.2 (~190 KB total: core + junit + parent pom) lives at
+        `libs/dev/dokimos/...` so the workshop builds without `git clone
+        dokimos && mvn install`. When Dokimos publishes to Central, drop this
+        block and the libs/ directory.
+    -->
+    <repositories>
+        <repository>
+            <id>workshop-vendored</id>
+            <name>Workshop-vendored JARs</name>
+            <url>file:${maven.multiModuleProjectDirectory}/libs</url>
+            <releases>
+                <enabled>true</enabled>
+                <checksumPolicy>ignore</checksumPolicy>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <build>
         <plugins>
             <plugin>

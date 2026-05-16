@@ -10,8 +10,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Semantic + exact-match response cache.
@@ -20,16 +21,27 @@ import java.util.concurrent.ConcurrentHashMap;
  * recompute cosine similarity against each entry per query. That's fine for the workshop's small caches
  * (≤ a few hundred entries), but at production scale you want an approximate-nearest-neighbour index
  * (HNSW via Redis Stack's vector search, or a dedicated vector DB) so lookup stays sub-linear.
+ *
+ * <p><b>Embedding-cache bound:</b> the in-process {@code embeddingCache} is a synchronized
+ * access-order LRU capped at {@link #DEFAULT_EMBEDDING_CACHE_MAX_ENTRIES} entries (override via
+ * {@code semantic-cache.embedding-cache-max-entries}). Once the cap is reached the
+ * least-recently-used embedding is evicted on the next put, which prevents the previously
+ * unbounded {@code ConcurrentHashMap} from growing without limit under high-cardinality query
+ * traffic.
  */
 @Service
 public class CachingService {
 
     private static final Logger log = LoggerFactory.getLogger(CachingService.class);
     private static final String SEMANTIC_CACHE_PREFIX = "semantic:";
+    private static final int DEFAULT_EMBEDDING_CACHE_MAX_ENTRIES = 1000;
 
     private final RedisTemplate<String, String> redisTemplate;
     private final EmbeddingModel embeddingModel;
-    // Concurrent so multiple request threads can hit the cache simultaneously without races.
+    // Bounded access-order LRU, wrapped in synchronizedMap because multiple request threads
+    // hit it concurrently. We don't use ConcurrentHashMap here because it has no built-in
+    // eviction; a synchronized LinkedHashMap with `accessOrder=true` is the simplest stdlib
+    // path to LRU semantics without pulling in Caffeine/Guava just for one cache.
     private final Map<String, Embedding> embeddingCache;
 
     @Value("${semantic-cache.similarity-threshold:0.95}")
@@ -39,9 +51,24 @@ public class CachingService {
     private long ttlSeconds;
 
     public CachingService(RedisTemplate<String, String> redisTemplate, EmbeddingModel embeddingModel) {
+        this(redisTemplate, embeddingModel, DEFAULT_EMBEDDING_CACHE_MAX_ENTRIES);
+    }
+
+    public CachingService(RedisTemplate<String, String> redisTemplate,
+                          EmbeddingModel embeddingModel,
+                          @Value("${semantic-cache.embedding-cache-max-entries:1000}") int maxEntries) {
         this.redisTemplate = redisTemplate;
         this.embeddingModel = embeddingModel;
-        this.embeddingCache = new ConcurrentHashMap<>();
+        if (maxEntries <= 0) {
+            throw new IllegalArgumentException("embedding-cache-max-entries must be > 0");
+        }
+        this.embeddingCache = Collections.synchronizedMap(
+                new LinkedHashMap<String, Embedding>(16, 0.75f, true) {
+                    @Override
+                    protected boolean removeEldestEntry(Map.Entry<String, Embedding> eldest) {
+                        return size() > maxEntries;
+                    }
+                });
     }
 
     // `unless = "#result == null"` prevents the cache miss (null return) from being cached

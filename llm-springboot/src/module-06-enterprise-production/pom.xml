@@ -71,11 +71,12 @@
             <artifactId>dokimos-core</artifactId>
             <version>0.14.2</version>
         </dependency>
-        <dependency>
-            <groupId>dev.dokimos</groupId>
-            <artifactId>dokimos-spring-ai</artifactId>
-            <version>0.14.2</version>
-        </dependency>
+        <!--
+            dokimos-spring-ai is no longer needed: the Spring AI bridge in
+            DokimosEvaluationConfig was replaced with a LangChain4J adapter
+            (`dokimosJudgeChatModel::chat`) when Spring AI was dropped from
+            this module on the Spring Boot 4 upgrade.
+        -->
         <!--
             Spring AI is intentionally NOT a dependency of this module.
 
