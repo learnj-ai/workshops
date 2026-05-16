@@ -84,78 +84,7 @@ public interface ChatMemoryStore {
 
 ### 2. RedisChatMemoryStore Implementation
 
-```java
-@Component
-public class RedisChatMemoryStore implements ChatMemoryStore {
-    private static final Logger log = LoggerFactory.getLogger(RedisChatMemoryStore.class);
-    private static final String MEMORY_KEY_PREFIX = "chat:memory:";
-    private static final long TTL_HOURS = 24;
-
-    // In-memory cache for workshop simplicity
-    private final Map<String, List<ChatMessage>> memoryCache = new ConcurrentHashMap<>();
-    private final RedisTemplate<String, Object> redisTemplate;
-
-    public RedisChatMemoryStore(RedisTemplate<String, Object> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
-
-    @Override
-    public List<ChatMessage> getMessages(Object memoryId) {
-        String key = memoryId.toString();
-        List<ChatMessage> messages = memoryCache.get(key);
-
-        if (messages == null) {
-            log.debug("No messages found for memory ID: {}", memoryId);
-            return new ArrayList<>();
-        }
-
-        log.debug("Retrieved {} messages for memory ID: {}", messages.size(), memoryId);
-        return new ArrayList<>(messages);
-    }
-
-    @Override
-    public void updateMessages(Object memoryId, List<ChatMessage> messages) {
-        String key = memoryId.toString();
-
-        if (messages == null || messages.isEmpty()) {
-            memoryCache.remove(key);
-            return;
-        }
-
-        // Store in memory cache
-        memoryCache.put(key, new ArrayList<>(messages));
-
-        // Mark as stored in Redis
-        String redisKey = MEMORY_KEY_PREFIX + key;
-        redisTemplate.opsForValue().set(redisKey, "stored", Duration.ofHours(TTL_HOURS));
-
-        log.debug("Stored {} messages for memory ID: {} with TTL of {} hours",
-                messages.size(), memoryId, TTL_HOURS);
-    }
-
-    @Override
-    public void deleteMessages(Object memoryId) {
-        String key = memoryId.toString();
-        memoryCache.remove(key);
-
-        String redisKey = MEMORY_KEY_PREFIX + key;
-        redisTemplate.delete(redisKey);
-
-        log.debug("Deleted messages for memory ID: {}", memoryId);
-    }
-}
-```
-
-**Design Notes:**
-
-- **Simplified Implementation**: Uses in-memory cache for workshop; production should serialize to Redis
-- **TTL Management**: Automatic expiration after 24 hours
-- **Thread-Safe**: ConcurrentHashMap ensures thread safety
-- **Key Prefixing**: Namespaces memory keys to avoid collisions
-
-### Production Redis Serialization
-
-For production, properly serialize ChatMessage objects:
+The store serializes the conversation as JSON and writes it to a single Redis key per session, with a TTL. The trick is the JSON codec — `ChatMessage` is a sealed hierarchy (`UserMessage`, `AiMessage`, `SystemMessage`, `ToolExecutionResultMessage`), and a plain Jackson `TypeReference<List<ChatMessage>>` cannot round-trip it (no `@JsonTypeInfo` discriminator). LangChain4J ships `ChatMessageSerializer` / `ChatMessageDeserializer` precisely for this case:
 
 ```java
 @Component
@@ -202,6 +131,21 @@ public class RedisChatMemoryStore implements ChatMemoryStore {
     }
 }
 ```
+
+**Design Notes:**
+
+- **Per-session key** (`chat:memory:<sessionId>`) — each conversation has its own TTL clock; popular sessions don't extend other sessions' lifetimes.
+- **TTL Management** — automatic expiration after 24 hours (configurable).
+- **`StringRedisTemplate`** — the value is a JSON string, so we don't need Object serialization or a custom `RedisTemplate` configuration.
+- **Empty/null = delete** — `updateMessages(memoryId, List.of())` deletes the key rather than writing `"[]"`. Matches the `ChatMemoryStore` "no messages = gone" semantics.
+
+> **Anti-pattern: in-memory backing maps.** Earlier drafts of this class kept a
+> `ConcurrentHashMap<String, List<ChatMessage>>` field and wrote a `"stored"`
+> sentinel to Redis. That looks like persistence but isn't: a pod restart wipes
+> the map, and a second app instance running against the same Redis sees an
+> empty conversation despite the sentinel saying "stored". The implementation
+> above writes the real conversation contents and is durable across restarts and
+> multi-instance deployments.
 
 > **Why not Jackson directly?** A common first attempt is
 > `objectMapper.readValue(json, new TypeReference<List<ChatMessage>>() {})`. That

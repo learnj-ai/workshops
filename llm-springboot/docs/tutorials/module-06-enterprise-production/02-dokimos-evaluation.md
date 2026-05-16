@@ -2,44 +2,17 @@
 
 How do you know if your RAG system is production-ready? Traditional software testing gives us unit tests and integration tests, but LLM applications are probabilistic—the same input can produce different outputs. **Dokimos** solves this by providing a comprehensive evaluation framework that measures quality across multiple dimensions, from factual accuracy to response relevance.
 
-> ## Prerequisite — install Dokimos locally first
+> ## No prerequisite install — Dokimos is vendored in this repo
 >
-> The `dev.dokimos:dokimos-core / dokimos-spring-ai / dokimos-junit` JARs are
-> **not** published to Maven Central. Before you can build or run Module 06,
-> clone the framework and install it into your local Maven repository:
+> `dev.dokimos:dokimos-core` and `dev.dokimos:dokimos-junit` 0.14.2 are not on
+> Maven Central. The workshop ships both JARs (~190 KB total) under
+> `libs/dev/dokimos/...` and the parent `pom.xml` declares a `file:`-backed
+> Maven repo pointing there, so `mvn install` from the workshop root resolves
+> them like any other dependency. No `git clone dokimos && mvn install` step.
 >
-> ```bash
-> # Anywhere outside this workshop (e.g. ~/code/):
-> git clone https://github.com/learnj-ai/dokimos.git
-> cd dokimos
-> git checkout v0.14.2                # match the version pinned in module-06's pom
-> mvn -DskipTests install
-> ```
->
-> This produces three artifacts under `~/.m2/repository/dev/dokimos/`:
->
-> - `dokimos-core/0.14.2/`
-> - `dokimos-spring-ai/0.14.2/`
-> - `dokimos-junit/0.14.2/`
->
-> Once those are present, `mvn install` on `module-06-enterprise-production`
-> will resolve them like any other Maven dependency. If you skip this step you
-> will hit `Could not find artifact dev.dokimos:dokimos-core:jar:0.14.2 in central`.
->
-> **Why a local install instead of Maven Central?** Dokimos is an evolving
-> internal framework; the version pinned here (`0.14.2`) is what these chapters
-> were written against. Publishing to Central requires Sonatype namespace
-> verification + GPG signing per release, which is out of scope for the
-> workshop. If you fork the framework and want a hermetic local-only build,
-> drop the installed JARs into a `repo/` directory under this module and add a
-> `<repository><url>file:///${project.basedir}/repo</url></repository>` block
-> to `module-06-enterprise-production/pom.xml`. Either way works; the local-Maven
-> path above is the lightest setup.
->
-> If the upstream repository is private and you don't have access, see "What if I
-> can't get Dokimos?" in `02-dokimos-evaluation.md` for fallback options
-> (replace with Spring AI's `EvaluationResult` interface or a hand-rolled
-> evaluator).
+> If Dokimos publishes to Maven Central later, drop the `libs/` directory and
+> the `<repositories>` block in `llm-springboot/pom.xml`; nothing else needs to
+> change.
 
 ## What is Dokimos?
 

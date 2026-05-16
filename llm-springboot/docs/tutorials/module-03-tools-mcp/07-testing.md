@@ -657,4 +657,4 @@ void testOrchestrator_ConcurrentRequests() {
 
 ## Navigation
 
-[← Back to REST Controller](06-rest-controller.md) | [Next: Conclusion →](conclusion.md)
+[← Back to REST Controller](06-rest-controller.md) | [Next: Real MCP →](09-real-mcp.md)

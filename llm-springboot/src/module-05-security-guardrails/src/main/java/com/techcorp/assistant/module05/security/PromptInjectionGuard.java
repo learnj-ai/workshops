@@ -13,14 +13,20 @@ public class PromptInjectionGuard {
 
     private static final Logger log = LoggerFactory.getLogger(PromptInjectionGuard.class);
 
-    // Patterns for common injection attempts
+    // Patterns for common injection attempts.
+    //
+    // The "ignore .* instructions" pattern accepts one or more qualifiers between
+    // "ignore" and "instructions/prompts" — the canonical attacker phrasing is
+    // "ignore all previous instructions" (two qualifiers), and the original
+    // single-qualifier pattern (`ignore (previous|all|prior) (instructions|prompts)`)
+    // did not match that.
     private static final List<Pattern> INJECTION_PATTERNS = List.of(
-            Pattern.compile("ignore\\s+(previous|all|prior)\\s+(instructions?|prompts?)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("ignore\\s+(?:(?:previous|all|prior|the|your|those|these|every)\\s+)+(?:instructions?|prompts?|rules?|directives?)", Pattern.CASE_INSENSITIVE),
             Pattern.compile("system:\\s*override", Pattern.CASE_INSENSITIVE),
             Pattern.compile("\\[INST\\].*?\\[/INST\\]", Pattern.DOTALL),
             Pattern.compile("you\\s+are\\s+now", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("forget\\s+(everything|all|previous)", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("disregard\\s+(previous|all)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("forget\\s+(everything|all|previous|prior|the\\s+above)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("disregard\\s+(?:(?:previous|all|prior|the|your)\\s+)+(?:instructions?|prompts?|rules?|directives?)?", Pattern.CASE_INSENSITIVE),
             Pattern.compile("<\\|im_start\\|>|<\\|im_end\\|>", Pattern.CASE_INSENSITIVE)
     );
 

@@ -12,7 +12,7 @@ Before you begin, ensure you have the following installed:
 - **Docker** (optional) - For running Redis locally
 - **OpenAI API key** - Required for LLM calls and evaluation
 - **curl or Postman** - For testing REST API endpoints
-- **Dokimos installed locally** — the evaluation framework used in this module is not on Maven Central. See [02-dokimos-evaluation.md](02-dokimos-evaluation.md#prerequisite--install-dokimos-locally-first) for the `git clone + mvn install` steps; do them **before** running `mvn install` on Module 06 itself, or you'll hit `Could not find artifact dev.dokimos:dokimos-core:jar:0.14.2`.
+- **Dokimos** — bundled in this repo at `libs/dev/dokimos/` and wired in via a `file:`-backed Maven repo in the parent pom. No separate clone or install step needed; `mvn install` from the workshop root resolves it transparently. See [02-dokimos-evaluation.md](02-dokimos-evaluation.md) for details.
 
 ## Clone and Setup
 

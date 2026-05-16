@@ -71,16 +71,35 @@
             <artifactId>dokimos-core</artifactId>
             <version>0.14.2</version>
         </dependency>
-        <dependency>
-            <groupId>dev.dokimos</groupId>
-            <artifactId>dokimos-spring-ai</artifactId>
-            <version>0.14.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
-            <version>1.0.0-M5</version>
-        </dependency>
+        <!--
+            dokimos-spring-ai is no longer needed: the Spring AI bridge in
+            DokimosEvaluationConfig was replaced with a LangChain4J adapter
+            (`dokimosJudgeChatModel::chat`) when Spring AI was dropped from
+            this module on the Spring Boot 4 upgrade.
+        -->
+        <!--
+            Spring AI is intentionally NOT a dependency of this module.
+
+            The original wiring imported `spring-ai-openai-spring-boot-starter`
+            1.0.0-M5 and used Spring AI's `OpenAiChatModel` for the Dokimos
+            judge. Spring AI 1.0.0-M5 is built against Spring Boot 3.x /
+            Spring Framework 6 and breaks on Spring Boot 4 in two ways:
+
+              (1) `OpenAiAutoConfiguration` statically references
+                  `org.springframework.boot.autoconfigure.web.client.RestClientAutoConfiguration`,
+                  which Spring Boot 4 removed.
+              (2) `OpenAiApi` calls `HttpHeaders.addAll(MultiValueMap)`, whose
+                  signature changed in Spring Framework 7.
+
+            At the time of this module's last update, no released Spring AI
+            version targets Spring Boot 4 / Spring Framework 7. Dokimos's
+            `JudgeLM` is a single-method functional interface, so we adapt
+            directly from LangChain4J's `ChatModel` in
+            `DokimosEvaluationConfig` and skip the Spring AI dependency
+            altogether. When a Spring-Boot-4-compatible Spring AI ships,
+            this module can switch back if desired.
+        -->
+        <!-- (intentionally no spring-ai dependency) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

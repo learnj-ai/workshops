@@ -91,12 +91,22 @@ public class CachingService {
     private long ttlSeconds;
 
     public CachingService(RedisTemplate<String, String> redisTemplate,
-                          EmbeddingModel embeddingModel) {
+                          EmbeddingModel embeddingModel,
+                          @Value("${semantic-cache.embedding-cache-max-entries:1000}") int maxEntries) {
         this.redisTemplate = redisTemplate;
         this.embeddingModel = embeddingModel;
-        // ConcurrentHashMap: multiple request threads can read/write the embedding
-        // cache simultaneously. A plain HashMap would race under load.
-        this.embeddingCache = new ConcurrentHashMap<>();
+        // Bounded access-order LRU wrapped in synchronizedMap. A plain
+        // ConcurrentHashMap would race-free but grow without limit — fine for
+        // a workshop demo, dangerous in production under high-cardinality
+        // query traffic. `accessOrder=true` plus `removeEldestEntry` gives us
+        // LRU eviction without pulling in Caffeine/Guava just for one cache.
+        this.embeddingCache = Collections.synchronizedMap(
+                new LinkedHashMap<String, Embedding>(16, 0.75f, true) {
+                    @Override
+                    protected boolean removeEldestEntry(Map.Entry<String, Embedding> eldest) {
+                        return size() > maxEntries;
+                    }
+                });
     }
 
     // unless = "#result == null" avoids caching the cache-miss sentinel — otherwise
@@ -108,23 +118,33 @@ public class CachingService {
     }
 
     public String semanticCacheGet(String query) {
-        // Get or compute embedding for query
-        Embedding queryEmbedding = getOrComputeEmbedding(query);
+        // Fast path: exact-match per-query key. Skip the similarity scan if we've
+        // seen this exact string before and it hasn't expired.
+        String exact = redisTemplate.opsForValue()
+            .get(SEMANTIC_CACHE_PREFIX + "query:" + query);
+        if (exact != null) {
+            log.debug("Semantic cache exact hit for: {}", query);
+            return exact;
+        }
 
-        // Search for similar cached queries
+        // Slow path: embedding-based similarity scan over the index hash.
+        Embedding queryEmbedding = getOrComputeEmbedding(query);
         Map<Object, Object> cache = redisTemplate.opsForHash()
             .entries(SEMANTIC_CACHE_PREFIX + "queries");
 
         for (Map.Entry<Object, Object> entry : cache.entrySet()) {
             String cachedQuery = (String) entry.getKey();
-            Embedding cachedEmbedding = getOrComputeEmbedding(cachedQuery);
+            // Skip stale index entries whose per-key value already expired.
+            String perKey = redisTemplate.opsForValue()
+                .get(SEMANTIC_CACHE_PREFIX + "query:" + cachedQuery);
+            if (perKey == null) continue;
 
+            Embedding cachedEmbedding = getOrComputeEmbedding(cachedQuery);
             double similarity = cosineSimilarity(queryEmbedding, cachedEmbedding);
 
             if (similarity >= similarityThreshold) {
-                String response = (String) entry.getValue();
                 log.info("Semantic cache hit - similarity: {}", similarity);
-                return response;
+                return perKey;
             }
         }
 
@@ -205,7 +225,7 @@ public class CachingService {
 - Returns first match above threshold
 
 **Embedding cache**:
-- In-memory `ConcurrentHashMap<String, Embedding>` — thread-safe for concurrent reads/writes; a plain `HashMap` would race under load.
+- In-memory **bounded access-order LRU** (`synchronizedMap(LinkedHashMap)`) capped via `semantic-cache.embedding-cache-max-entries` (default 1000). Thread-safe and bounded; a plain `HashMap` would race, and a `ConcurrentHashMap` would race-free but grow without limit. The eviction policy is least-recently-used — embeddings for queries we haven't seen in a while fall out first.
 - Avoids redundant embedding calls (~100 ms each).
 - Bounded by JVM memory (acceptable for moderate query volumes).
 

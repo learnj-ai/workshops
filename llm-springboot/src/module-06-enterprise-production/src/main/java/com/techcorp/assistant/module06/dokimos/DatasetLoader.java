@@ -4,9 +4,12 @@ import dev.dokimos.core.Dataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -29,10 +32,29 @@ public class DatasetLoader {
      * @throws DatasetLoadException if dataset file is missing or malformed
      */
     public Dataset loadDataset() throws DatasetLoadException {
+        // Try classpath first so `java -jar` from any CWD works (the dataset
+        // ships under src/main/resources/data/). Fall back to filesystem so
+        // a custom datasetPath pointing outside the JAR still resolves.
+        ClassPathResource classpathResource = new ClassPathResource(datasetPath);
+        if (classpathResource.exists()) {
+            try (InputStream in = classpathResource.getInputStream()) {
+                log.info("Loading dataset from classpath: {}", datasetPath);
+                String json = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                Dataset dataset = Dataset.fromJson(json);
+                log.info("Successfully loaded dataset '{}' with {} examples",
+                        dataset.name(), dataset.examples().size());
+                return dataset;
+            } catch (IOException e) {
+                throw new DatasetLoadException("Failed to read classpath dataset: " + datasetPath, e);
+            } catch (Exception e) {
+                throw new DatasetLoadException("Malformed dataset JSON on classpath: " + datasetPath, e);
+            }
+        }
+
         Path path = Paths.get(datasetPath);
 
         if (!path.toFile().exists()) {
-            String errorMsg = String.format("Dataset file not found at path: %s", datasetPath);
+            String errorMsg = String.format("Dataset file not found at path: %s (also not on classpath)", datasetPath);
             log.error(errorMsg);
             throw new DatasetLoadException(errorMsg);
         }
@@ -44,7 +66,7 @@ public class DatasetLoader {
         }
 
         try {
-            log.info("Loading dataset from: {}", datasetPath);
+            log.info("Loading dataset from filesystem: {}", datasetPath);
             Dataset dataset = Dataset.fromJson(path);
             log.info("Successfully loaded dataset '{}' with {} examples",
                     dataset.name(),

@@ -103,11 +103,13 @@ java -jar target/module-01-vector-embeddings-1.0.0-SNAPSHOT.jar
 ```
 Loading documents and building vector indexes...
 Loaded 3 documents
-Indexed 18 segments using RECURSIVE strategy
-Indexed 12 segments using PARAGRAPH strategy
-Vector index initialization completed in 2847ms
-Started Module01VectorEmbeddingsApplication in 3.2 seconds
+Indexed 4 segments using RECURSIVE strategy
+Indexed 7 segments using PARAGRAPH strategy
+Vector index initialization completed in ~60ms
+Started Module01VectorEmbeddingsApplication in ~6 seconds
 ```
+
+The exact numbers depend on the contents of `src/main/resources/data/` (3 markdown files in the workshop default) and on your machine — the bulk of the 6-second startup is the AllMiniLM-L6-v2 model loading (~80 MB onnxruntime initialisation), not the indexing itself.
 
 The application runs on **http://localhost:8080** by default.
 
@@ -136,27 +138,28 @@ curl -X POST http://localhost:8080/api/v1/search/vector \
   }'
 ```
 
-**Expected Response**:
+**Expected Response** (shape; absolute scores will vary with the AllMiniLM-L6-v2 model and the contents of `src/main/resources/data/`):
 ```json
 {
   "embeddingDimension": 384,
   "metric": "COSINE",
   "chunkingStrategy": "RECURSIVE",
-  "indexedSegmentCount": 18,
+  "indexedSegmentCount": 4,
   "results": [
     {
-      "content": "To reset your password, visit the password reset page...",
-      "score": 0.8234,
+      "content": "# Password Reset Guide\n\nEmployees can reset their TechCorp password from the identity portal...",
+      "score": 0.57,
       "metadata": {
-        "source": "password-reset.md",
-        "chunkIndex": 0
+        "chunkingStrategy": "RECURSIVE",
+        "chunkIndex": 0,
+        "source": "password-reset.md"
       }
     }
   ]
 }
 ```
 
-The high `score` (close to 1.0) indicates semantic similarity between your query and the matched content!
+The top result is the password-reset doc — that's semantic search working: the query "how do I reset my password" matched the chunk semantically, not by exact keywords. With the workshop's 3 default markdown files, the AllMiniLM-L6-v2 model produces cosine scores in roughly the 0.4–0.7 range for near-topical matches; what matters is that the **right** chunk lands first, not that the score is near 1.0.
 
 ### 3. Try Different Queries
 

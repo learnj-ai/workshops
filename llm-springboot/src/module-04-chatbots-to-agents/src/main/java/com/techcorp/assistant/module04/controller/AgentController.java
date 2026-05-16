@@ -6,12 +6,17 @@ import com.techcorp.assistant.module04.dto.AgentResponse;
 import com.techcorp.assistant.module04.memory.ConversationMemoryService;
 import com.techcorp.assistant.module04.orchestrator.MultiAgentOrchestrator;
 import com.techcorp.assistant.module04.service.TaskDecomposer;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.UserMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * REST controller for agent-based interactions.
@@ -61,17 +66,34 @@ public class AgentController {
                     ? request.sessionId()
                     : UUID.randomUUID().toString();
 
-            // Add user message to memory
+            // Resolve prior turns for the session BEFORE we add the new user message;
+            // otherwise the history we hand to the agent would include the question
+            // it's about to answer (and the agent would see its own prompt twice).
+            String priorTurns = renderHistory(memoryService.getHistory(sessionId));
             memoryService.addMessage(sessionId, request.message());
+
+            // Inject the prior-turn transcript into the message so the agent has
+            // conversational context. Without this, follow-ups like "what plan are
+            // they on?" lose the antecedent (which customer "they" refers to) and
+            // the ReAct loop spins asking for clarification.
+            String messageWithHistory = priorTurns.isEmpty()
+                    ? request.message()
+                    : """
+                            Previous conversation (prior user/assistant turns):
+                            %s
+
+                            Current user question:
+                            %s
+                            """.formatted(priorTurns, request.message());
 
             // Execute based on mode
             String response = switch (request.mode().toLowerCase()) {
-                case "react" -> reActAgent.solve(request.message());
-                case "multiagent" -> multiAgentOrchestrator.routeRequest(request.message());
-                case "collaborative" -> multiAgentOrchestrator.collaborativeRequest(request.message());
+                case "react" -> reActAgent.solve(messageWithHistory);
+                case "multiagent" -> multiAgentOrchestrator.routeRequest(messageWithHistory);
+                case "collaborative" -> multiAgentOrchestrator.collaborativeRequest(messageWithHistory);
                 case "decompose" -> {
                     TaskDecomposer.TaskExecutionResult result =
-                            taskDecomposer.executeComplexTask(request.message());
+                            taskDecomposer.executeComplexTask(messageWithHistory);
                     yield result.summary();
                 }
                 default -> "Unknown mode: " + request.mode();
@@ -104,6 +126,18 @@ public class AgentController {
         log.info("Clearing session: {}", sessionId);
         memoryService.clearMemory(sessionId);
         return ResponseEntity.ok("Session cleared");
+    }
+
+    private String renderHistory(List<ChatMessage> history) {
+        if (history == null || history.isEmpty()) return "";
+        return history.stream()
+                .map(m -> switch (m) {
+                    case UserMessage u -> "User: " + u.singleText();
+                    case AiMessage a   -> "Assistant: " + a.text();
+                    default            -> "";
+                })
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.joining("\n"));
     }
 
     /**
